@@ -7,6 +7,7 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
+    AlertDialogAction
 } from "@/components/ui/alert-dialog"
 
 interface Alert {
@@ -67,10 +68,10 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
                                 alert?.onResult?.(false);
                             }
                             setAlertVisible(false);
-                        }}>OK</AlertDialogCancel>
-                        {/* <AlertDialogAction onClick={() => {
+                        }}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => {
                             alert?.onResult?.(true);
-                        }} >OK</AlertDialogAction> */}
+                        }} >Confirm</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

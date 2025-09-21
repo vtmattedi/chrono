@@ -6,9 +6,10 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { type Team, useTimer } from '../Providers/Timer.tsx';
 import { toast } from "sonner"
+import { Switch } from '@/components/ui/switch.tsx';
 const MAXTEAMS = 20;
 const Teams: React.FC = () => {
-    const [teams, setTeams] = React.useState<Team[]>(Array.from({ length: MAXTEAMS }, () => ({ name: '', baseTime: 0, state: 'paused', timeLeft: 0 })));
+    const [teams, setTeams] = React.useState<Team[]>(Array.from({ length: MAXTEAMS }, () => ({ name: '', baseTime: 0, state: 'ready', timeLeft: 0 })));
     const [numberOfTeams, setNumberOfTeams] = React.useState(5);
     const [timeInput, setTimeInput] = React.useState('00:30:00');
     const Navigate = useNavigate();
@@ -90,6 +91,27 @@ const Teams: React.FC = () => {
                         />
                     </div>
                 </div>
+                <div className='flex flex-row gap-2 justify-center items-center'>
+                    <div className='flex items-center gap-2'>
+                        <Switch className="" id="countdowntoggle" />
+                        <label htmlFor="countdowntoggle" className="ml-2">Start countdown</label>
+                    </div>
+                    <Button className=' bg-[#4C6F50] text-white hover:bg-[#3e5c40] w-32 text-xl justify-center items-center'
+                        onClick={() => {
+                            const t = teams;
+                            for (let i = 0; i < t.length; i++) {
+                                if (!t[i].name || t[i].name.trim() === '') {
+                                    t[i].name = `Equipe ${i + 1}`;
+                                }
+                                t[i].baseTime = timeInput.split(':').reduce((acc, time) => (60 * acc) + +time, 0);
+                            }
+                            setGlobalTeams(t.slice(0, numberOfTeams));
+                            toast.success("Equipes configuradas!");
+                            const start = (document.getElementById('countdowntoggle') as HTMLInputElement).checked;
+                            Navigate('/chrono' + (start ? '?start=true' : ''));
+                        }}
+                    >Start <ArrowRight  /></Button>
+                </div>
                 <Card className='flex flex-col gap-2 w-[80%] max-h-[60vh] overflow-y-auto p-4' >
                     {
                         Array.from({ length: numberOfTeams }, (_, i) => i + 1).map((teamNumber) => (
@@ -112,22 +134,7 @@ const Teams: React.FC = () => {
                             </Card>
                         ))}
                 </Card>
-                <div>
-                    <Button className='mt-2 bg-[#4C6F50] text-white'
-                        onClick={() => {
-                            const t = teams;
-                            for (let i = 0; i < t.length; i++) {
-                                if (!t[i].name || t[i].name.trim() === '') {
-                                    t[i].name = `Equipe ${i + 1}`;
-                                }
-                                t[i].baseTime = timeInput.split(':').reduce((acc, time) => (60 * acc) + +time, 0);
-                            }
-                            setGlobalTeams(t.slice(0, numberOfTeams));
-                            toast.success("Equipes configuradas!");
-                            Navigate('/chrono');
-                        }}
-                    >Start <ArrowRight /></Button>
-                </div>
+
             </Card>
         </div>
     );

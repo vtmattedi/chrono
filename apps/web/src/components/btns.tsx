@@ -13,7 +13,7 @@ export const PlayBtn: React.FC<BtnsProps> = ({ state, ...props }) => {
         <Button className='bg-green-500 text-white hover:bg-green-600' {...props} disabled={state === 'running'}
             style={{ color: color }}
         >
-            <Play fill={color} /> {state === 'paused' ? 'Start' : 'Resume'}
+            <Play fill={color} /> {(state === 'paused' || state === 'ready') ? 'Start' : 'Resume'}
         </Button>
     );
 };

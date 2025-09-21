@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 
-export type TeamState = 'running' | 'paused' | 'finished';
+export type TeamState = 'running' | 'paused' | 'finished' | 'ready';
 
 export type Team = {
     name: string;
@@ -11,6 +11,8 @@ export type Team = {
     timeRunning?: number; // in seconds
     state: TeamState;
     startTime?: Date;
+    timeAdded?: number; // in seconds
+    timeSubtracted?: number; // in seconds
     finishTime?: Date;
 }
 
@@ -29,21 +31,23 @@ const TimerContext = createContext<TimerContextType | undefined>(undefined);
 
 export const TimerProvider = ({ children }: { children: ReactNode }) => {
     const [teams, _setTeams] = useState<Team[]>([]);
-    const [avg, setAvg] = useState<any>({ sum: 0, count: 0 });
     const lastTick = React.useRef(0);
-    const setTeams = (newTeams: Team[], store: boolean = false) => {
+    const setTeams = (newTeams: Team[]) => {
+        
+        
         _setTeams(newTeams);
-        console.log('Setting teams', newTeams);
-        if (store) {
-            localStorage.setItem('teams', JSON.stringify(newTeams));
-        }
+        rearmChrono(newTeams.map((_, i) => i));
+        
     }
     const startChrono = (index: number[]) => {
         const t = teams;
         for (const i of index) {
             if (t[i].state === 'paused' && t[i].baseTime > 0) {
+                t[i].state = 'running';
+            }
+            else if (t[i].state === 'ready' && t[i].baseTime > 0) {
                 t[i].startTime = new Date();
-                t[i].timeLeft = t[i].timeLeft || t[i].baseTime;
+                t[i].timeLeft = t[i].baseTime;
                 t[i].state = 'running';
             }
         }
@@ -81,21 +85,26 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
         for (const i of index) {
             t[i].timeLeft += seconds;
             if (t[i].timeLeft < 0) t[i].timeLeft = 0;
+            if (seconds > 0) {
+                t[i].timeAdded = (t[i].timeAdded || 0) + seconds;
+            }
+            else {
+                t[i].timeSubtracted = (t[i].timeSubtracted || 0) - seconds;
+            }
         }
         _setTeams([...t]);
     }
     const rearmChrono = (index: number[]) => {
         const t = teams;
         for (const i of index) {
-            if (t[i].state === 'finished') {
-                t[i].state = 'paused';
-                t[i].timeLeft = t[i].baseTime;
-                t[i].timeRunning = 0;
-                t[i].timePaused = 0;
-                t[i].startTime = undefined;
-                t[i].finishTime = undefined;
-            }
+            t[i].state = 'ready';
+            t[i].timeLeft = t[i].baseTime;
+            t[i].timeRunning = 0;
+            t[i].timePaused = 0;
+            t[i].startTime = undefined;
+            t[i].finishTime = undefined;
         }
+        _setTeams([...t]);
     }
     React.useEffect(() => {
         const interval = setInterval(() => {
@@ -135,7 +144,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
             }
         }, 5);
         return () => clearInterval(interval);
-    }, [teams, avg]);
+    }, [teams]);
     return (
         <TimerContext.Provider value={{ teams, rearmChrono, setTeams, startChrono, pauseChrono, finishChrono, addTime, unpauseChrono }}>
             {children}
