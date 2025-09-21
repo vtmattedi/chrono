@@ -1,4 +1,4 @@
-import React, { , useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {  useTimer } from '../Providers/Timer.tsx';
 import { Card } from '@/components/ui/card.tsx';
 import { Button } from '@/components/ui/button.tsx';
