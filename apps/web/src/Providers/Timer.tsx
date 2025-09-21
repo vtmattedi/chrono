@@ -84,13 +84,21 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     const addTime = (index: number[], seconds: number) => {
         const t = teams;
         for (const i of index) {
+            const old = t[i].timeLeft || 0;
             t[i].timeLeft += seconds;
             if (t[i].timeLeft < 0) t[i].timeLeft = 0;
+            if (t[i].timeLeft === 0) {
+                t[i].state = 'finished';
+                toast.success(`Team ${t[i].name} has finished!`, {
+                    duration: 4000,
+                    position: 'top-center',
+                });
+            }
             if (seconds > 0) {
-                t[i].timeAdded = (t[i].timeAdded || 0) + seconds;
+                t[i].timeAdded = t[i].timeLeft - old + (t[i].timeAdded || 0);
             }
             else {
-                t[i].timeSubtracted = (t[i].timeSubtracted || 0) - seconds;
+                t[i].timeSubtracted = (t[i].timeSubtracted || 0) - (t[i].timeLeft - old);
             }
         }
         _setTeams([...t]);

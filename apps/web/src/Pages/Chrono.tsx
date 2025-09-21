@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import {  useTimer } from '../Providers/Timer.tsx';
+import { useTimer } from '../Providers/Timer.tsx';
 import { Card } from '@/components/ui/card.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Plus, Minus, RotateCcw, Settings, PlusCircle } from 'lucide-react';
@@ -38,7 +38,7 @@ const Chrono: React.FC = () => {
                 <div className='flex w-full justify-between items-end text-2xl px-2 gap-2'>
                     {/* <img src="/logo-nobg.png" alt="Logo" className="h-8 " /> */}
                     <span className='text-2xl font-audiowide'>Global Controls</span>
-                    <Button variant="outline" size="sm" onClick={() =>{
+                    <Button variant="outline" size="sm" onClick={() => {
                         showAlert(
                             <div className='flex items-center gap-2'><Settings color='#908101ff' /><span> Configure new teams?</span></div>,
                             <span>This will erase current teams and their progress. Are you sure?</span>,
@@ -73,9 +73,9 @@ const Chrono: React.FC = () => {
                         <div className='flex justify-between items-center'>
                             <h2 className='font-lato text-xl mb-2'>{maxName(team.name)}</h2>
                             <span
-                            // 2f6298ff
+                                // 2f6298ff
                                 style={{
-                                    color: team.state === 'ready' ? '#2f6298ff': team.state === 'running' ? 'green' : team.state === 'paused' ? 'orange' : 'red',
+                                    color: team.state === 'ready' ? '#2f6298ff' : team.state === 'running' ? 'green' : team.state === 'paused' ? 'orange' : 'red',
                                 }}
                             >{team.state[0].toLocaleUpperCase() + team.state.slice(1)}</span>
                         </div>
@@ -97,6 +97,10 @@ const Chrono: React.FC = () => {
                                         <span className='font-inter text-2xl'>
                                             {new Date((team.timeRunning || 0) * 1000).toISOString().slice(14, 19)}
                                         </span>
+                                    </div>
+                                    <div className='flex justify-between items-center w-full px-4'>
+                                        <span className='text-sm text-red-500'>-{team.timeSubtracted || 0}</span>
+                                        <span className='text-sm text-green-500'>+{team.timeAdded || 0}</span>
                                     </div>
                                     <Button className='bg-blue-500 text-white' onClick={() => rearmChrono([index])}><RotateCcw className='rotate-275' /><span>Reset</span></Button>
                                 </div>
