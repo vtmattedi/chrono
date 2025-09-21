@@ -1,16 +1,17 @@
 import React, { useEffect } from 'react';
-import { useTimer, type Team } from '../Providers/Timer.tsx';
+import { useTimer, type SpeedType, type Team } from '../Providers/Timer.tsx';
 import { Card } from '@/components/ui/card.tsx';
 import { Button } from '@/components/ui/button.tsx';
-import { Plus, Minus, RotateCcw, Settings, PlusCircle } from 'lucide-react';
-import { PlayBtn, PauseBtn, StopBtn } from '../components/btns.tsx';
+import { Plus, Minus, RotateCcw, Settings, PlusCircle, Download } from 'lucide-react';
+import { PlayBtn, PauseBtn, StopBtn, SpeedControl } from '../components/btns.tsx';
 
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router';
 import { Input } from '@/components/ui/input.tsx';
 import { useAlert } from '@/Providers/Alerts.tsx';
+
 const Chrono: React.FC = () => {
-    const { teams, startChrono, pauseChrono, finishChrono, addTime, rearmChrono, setTeams } = useTimer();
+    const { teams, startChrono, pauseChrono, finishChrono, addTime, rearmChrono, setTeams, setSpeed } = useTimer();
     const [values, setValues] = React.useState<string[]>(teams.map(() => '05:00'));
     const { showAlert } = useAlert();
     const navigate = useNavigate();
@@ -35,14 +36,16 @@ const Chrono: React.FC = () => {
                     t[i].baseTime = config.time.split(':').reduce((acc, time) => (60 * acc) + +time, 0);
                 }
                 const _teams = t.slice(0, config.numberOfTeams)
-                console.log('Setting teams from saved config:', _teams,t, config.numberOfTeams);
+                console.log('Setting teams from saved config:', _teams, t, config.numberOfTeams);
                 setTeams(_teams);
+                setValues(_teams.map(() => "05:00"));
             }
         }
         const params = new URLSearchParams(window.location.search);
         if (params.get('start') === 'true') {
             startChrono(teams.map((_, i) => i));
         }
+
     }, []);
     const maxName = (name: string) => {
         if (name.length > 18) {
@@ -56,17 +59,46 @@ const Chrono: React.FC = () => {
                 <div className='flex w-full justify-between items-end text-2xl px-2 gap-2'>
                     {/* <img src="/logo-nobg.png" alt="Logo" className="h-8 " /> */}
                     <span className='text-2xl font-audiowide'>Global Controls</span>
-                    <Button variant="outline" size="sm" onClick={() => {
-                        showAlert(
-                            <div className='flex items-center gap-2'><Settings color='#908101ff' /><span> Configure new teams?</span></div>,
-                            <span>This will erase current teams and their progress. Are you sure?</span>,
-                            (result: boolean) => {
-                                if (result) {
-                                    navigate('/');
+                    <div className='flex gap-2 items-center'>
+                        <Button variant="outline" size="sm" onClick={() => {
+                            showAlert(
+                                <div className='flex items-center gap-2'><Settings color='#908101ff' /><span> Configure new teams?</span></div>,
+                                <span>This will erase current teams and their progress. Are you sure?</span>,
+                                (result: boolean) => {
+                                    if (result) {
+                                        navigate('/');
+                                    }
                                 }
-                            }
-                        );
-                    }} className='mb-1'><PlusCircle /> New Teams</Button>
+                            );
+                        }} className='mb-1'><PlusCircle /> New Teams</Button>
+                        <Button variant="outline" size="sm" onClick={() => {
+                            const csvContent = "data:text/csv;charset=utf-8," +
+                                ['Team Name,State,Base Time,Time Left,Time Running,Time Paused,Total Time,Time Added,Time Subtracted,Speed']
+                                    .concat(teams.map(team => {
+                                        return [
+                                            `"${team.name.replace(/"/g, '""')}"`,
+                                            team.state,
+                                            new Date(team.baseTime * 1000).toISOString().slice(11, 19),
+                                            new Date(team.timeLeft * 1000).toISOString().slice(11, 19),
+                                            new Date((team.timeRunning || 0) * 1000).toISOString().slice(11, 19),
+                                            new Date((team.timePaused || 0) * 1000).toISOString().slice(11, 19),
+                                            new Date(((team.timeRunning || 0) + (team.timePaused || 0)) * 1000).toISOString().slice(11, 19),
+                                            new Date((team.timeAdded || 0) * 1000).toISOString().slice(11, 19),
+                                            new Date((team.timeSubtracted || 0) * 1000).toISOString().slice(11, 19),
+                                            team.speed || 1
+                                        ].join(',');
+                                    })).join('\n');
+                            const encodedUri = encodeURI(csvContent);
+                            const link = document.createElement("a");
+                            link.setAttribute("href", encodedUri);
+                            link.setAttribute("download", `mw_chrono_${new Date().toISOString().slice(0, 10)}.csv`);
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        }}>
+                            <Download /> Export csv
+                        </Button>
+                    </div>
                 </div>
                 <div className=' flex flex-row'>
                     <Button onClick={() => startChrono(teams.map((_, i) => i))} className='m-2 p-2 bg-green-500 text-white rounded'>Start All</Button>
@@ -117,10 +149,22 @@ const Chrono: React.FC = () => {
                                         </span>
                                     </div>
                                     <div className='flex justify-between items-center w-full px-4'>
+                                        <span className='text-muted-foreground text-sm'>Added Time:</span>
+                                        <span className='font-inter text-lg text-green-500'>
+                                            {new Date((team.timeAdded || 0) * 1000).toISOString().slice(14, 19)}
+                                        </span>
+                                    </div>
+                                    <div className='flex justify-between items-center w-full px-4'>
+                                        <span className='text-muted-foreground text-sm'>Sub'ed Time:</span>
+                                        <span className='font-inter text-lg text-red-500'>
+                                            {new Date((team.timeSubtracted || 0) * 1000).toISOString().slice(14, 19)}
+                                        </span>
+                                    </div>
+                                    {/* <div className='flex justify-between items-center w-full px-4'>
                                         <span className='text-sm text-red-500'>-{team.timeSubtracted || 0}</span>
                                         <span className='text-sm text-green-500'>+{team.timeAdded || 0}</span>
-                                    </div>
-                                    <Button className='bg-blue-500 text-white' onClick={() => rearmChrono([index])}><RotateCcw className='rotate-275' /><span>Reset</span></Button>
+                                    </div> */}
+                                    <Button className='bg-blue-500 text-white mt-2' onClick={() => rearmChrono([index])}><RotateCcw className='rotate-275' /><span>Reset</span></Button>
                                 </div>
                             ) : (<>
                                 <div className='flex justify-center items-center text-4xl h-full'>
@@ -157,7 +201,9 @@ const Chrono: React.FC = () => {
                                         <PauseBtn state={team.state} onClick={() => pauseChrono([index])} />
                                         <StopBtn state={team.state} onClick={() => finishChrono([index])} />
                                     </div>
-
+                                    <div>
+                                        <SpeedControl state={team.state} speed={team.speed || 1} setSpeed={(speed: SpeedType) => { setSpeed([index], speed); }} />
+                                    </div>
                                 </div>
                             </>)
                         }
