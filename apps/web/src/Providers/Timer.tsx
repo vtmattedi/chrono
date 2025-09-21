@@ -33,11 +33,12 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     const [teams, _setTeams] = useState<Team[]>([]);
     const lastTick = React.useRef(0);
     const setTeams = (newTeams: Team[]) => {
-        
-        
-        _setTeams(newTeams);
-        rearmChrono(newTeams.map((_, i) => i));
-        
+        const _teams = newTeams.map(team => {
+            team.state = 'ready';
+            team.timeLeft = team.baseTime;
+            return team;
+        });
+        _setTeams(_teams);
     }
     const startChrono = (index: number[]) => {
         const t = teams;

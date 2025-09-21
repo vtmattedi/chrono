@@ -91,10 +91,10 @@ const Teams: React.FC = () => {
                         />
                     </div>
                 </div>
-                <div className='flex flex-row gap-2 justify-center items-center'>
-                    <div className='flex items-center gap-2'>
+                <div className='flex flex-row gap-4 justify-center items-center'>
+                    <div className='flex flex-row items-center gap-2 bg-gray-400 dark:bg-gray-800 p-2 rounded-md'>
                         <Switch className="" id="countdowntoggle" />
-                        <label htmlFor="countdowntoggle" className="ml-2">Start countdown</label>
+                        <label htmlFor="countdowntoggle" className="ml-2">Start countdown automatically</label>
                     </div>
                     <Button className=' bg-[#4C6F50] text-white hover:bg-[#3e5c40] w-32 text-xl justify-center items-center'
                         onClick={() => {
@@ -107,8 +107,8 @@ const Teams: React.FC = () => {
                             }
                             setGlobalTeams(t.slice(0, numberOfTeams));
                             toast.success("Equipes configuradas!");
-                            const start = (document.getElementById('countdowntoggle') as HTMLInputElement).checked;
-                            Navigate('/chrono' + (start ? '?start=true' : ''));
+                            const start = (document.getElementById('countdowntoggle') as HTMLButtonElement).ariaChecked;
+                            Navigate('/chrono' + (start === 'true' ? '?start=true' : ''));
                         }}
                     >Start <ArrowRight  /></Button>
                 </div>
