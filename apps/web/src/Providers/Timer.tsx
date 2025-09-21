@@ -33,6 +33,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     const [teams, _setTeams] = useState<Team[]>([]);
     const lastTick = React.useRef(0);
     const setTeams = (newTeams: Team[]) => {
+        console.log('Setting teams:', newTeams);
         const _teams = newTeams.map(team => {
             team.state = 'ready';
             team.timeLeft = team.baseTime;

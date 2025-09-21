@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useTimer } from '../Providers/Timer.tsx';
+import { useTimer, type Team } from '../Providers/Timer.tsx';
 import { Card } from '@/components/ui/card.tsx';
 import { Button } from '@/components/ui/button.tsx';
 import { Plus, Minus, RotateCcw, Settings, PlusCircle } from 'lucide-react';
@@ -10,16 +10,34 @@ import { useNavigate } from 'react-router';
 import { Input } from '@/components/ui/input.tsx';
 import { useAlert } from '@/Providers/Alerts.tsx';
 const Chrono: React.FC = () => {
-    const { teams, startChrono, pauseChrono, finishChrono, addTime, rearmChrono } = useTimer();
+    const { teams, startChrono, pauseChrono, finishChrono, addTime, rearmChrono, setTeams } = useTimer();
     const [values, setValues] = React.useState<string[]>(teams.map(() => '05:00'));
     const { showAlert } = useAlert();
     const navigate = useNavigate();
     useEffect(() => {
         if (teams.length === 0) {
-            toast.error("No teams available. Please set up teams first.", {
-                position: 'top-center',
-            });
-            navigate('/');
+            const savedConfig = localStorage.getItem('savedConfig');
+            if (!savedConfig) {
+                toast.error('No teams configured. Redirecting to setup page.', {
+                    duration: 4000,
+                    position: 'top-center',
+                });
+                navigate('/');
+            }
+            else {
+                const config = JSON.parse(savedConfig) as { team: Team[]; numberOfTeams: number; time: string };
+                console.log('Loaded saved config:', config);
+                const t = config.team;
+                for (let i = 0; i < t.length; i++) {
+                    if (!t[i].name || t[i].name.trim() === '') {
+                        t[i].name = `Equipe ${i + 1}`;
+                    }
+                    t[i].baseTime = config.time.split(':').reduce((acc, time) => (60 * acc) + +time, 0);
+                }
+                const _teams = t.slice(0, config.numberOfTeams)
+                console.log('Setting teams from saved config:', _teams,t, config.numberOfTeams);
+                setTeams(_teams);
+            }
         }
         const params = new URLSearchParams(window.location.search);
         if (params.get('start') === 'true') {
