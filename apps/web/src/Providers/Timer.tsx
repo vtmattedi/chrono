@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, type ReactNode } from 'react';
-import { toast } from 'sonner';
+import { useAlert } from './Alerts';
+
 
 export type TeamState = 'running' | 'paused' | 'finished' | 'ready';
 export type SpeedType = 0.5 | 1 | 2 | 4;
@@ -15,6 +16,34 @@ export type Team = {
     timeSubtracted?: number; // in seconds
     finishTime?: Date;
     speed?: SpeedType; // speed multiplier (1x, 2x, etc.)
+    finalDrift?: number; // in ms, positive or negative
+}
+
+// name: team.name,
+//             state: team.state,
+//             timeLeft: team.timeLeft,
+//             timeRunning: team.timeRunning,
+//             timePaused: team.timePaused,
+//             startTime: team.startTime,
+//             finishTime: team.finishTime
+
+export type TeamUpdate = {
+    name: string,
+    state: TeamState,
+    timeLeft?: number,
+    speed?: SpeedType,
+    finishTime?: string,
+    startTime?: string,
+    timeRunning?: number,
+    timePaused?: number,
+    timeAdded?: number,
+    timeSubtracted?: number,
+    finalDrift?: number,
+}
+
+export type TeamConfig = {
+    name: string[];
+    baseTime: number; // in seconds
 }
 
 type TimerContextType = {
@@ -27,13 +56,38 @@ type TimerContextType = {
     rearmChrono: (index: number[]) => void;
     addTime: (index: number[], seconds: number) => void;
     setSpeed: (index: number[], speed: SpeedType) => void;
+    updateTeamsState: (teamsStates: TeamUpdate[]) => void;
+    startTicker: () => void;
+    stopTicker: () => void;
+    setTeamsFromConfig: (config: TeamConfig) => void;
 };
 
 const TimerContext = createContext<TimerContextType | undefined>(undefined);
 
 export const TimerProvider = ({ children }: { children: ReactNode }) => {
-    const [teams, _setTeams] = useState<Team[]>([]);
-    const lastTick = React.useRef({ tickNum: 0, time: Date.now() });
+    const [teams, __setTeams] = useState<Team[]>([]);
+    const [tickerState, setTickerState] = useState<boolean>(false);
+    const lastTick = React.useRef({ tickNum: 0, time: performance.now() });
+    const ticker = React.useRef<NodeJS.Timeout | null>(null);
+    const teamRefs = React.useRef<Team[]>([]);
+    const { useToast } = useAlert();
+    const _setTeams = (newTeams: Team[]) => {
+        __setTeams(newTeams);
+        teamRefs.current = newTeams;
+    }
+    const setTeamsFromConfig = (config: TeamConfig) => {
+        const _teams: Team[] = [];
+        for (let i = 0; i < config.name.length; i++) {
+            _teams.push({
+                name: config.name[i],
+                baseTime: config.baseTime,
+                timeLeft: config.baseTime,
+                state: 'ready',
+                speed: 1
+            });
+        }
+        _setTeams(_teams);
+    }
     const setTeams = (newTeams: Team[]) => {
         console.log('Setting teams:', newTeams);
         const _teams = newTeams.map(team => {
@@ -83,10 +137,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
                 t[i].state = 'finished';
                 t[i].finishTime = new Date();
             }
-            toast.success(`Team ${t[i].name} has finished!`, {
-                duration: 4000,
-                position: 'top-center',
-            });
+            useToast('success', `Team ${t[i].name} has finished!`);
         }
         _setTeams([...t]);
     }
@@ -131,13 +182,60 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
         _setTeams([...t]);
     }
 
+    const startTicker = () => {
+        setTickerState(true);
+    }
+    const stopTicker = () => {
+        setTickerState(false);
+    }
+
+    //  name: team.name,
+    //             state: team.state,
+    //             timeLeft: team.timeLeft,
+    //             speed: team.speed,
+    //             finished: team.finishTime || null
+    const updateTeamsState = (teamsStates: TeamUpdate[]) => {
+        try {
+            const t = teamRefs.current;
+            if (t.length === 0)
+                return false;
+            console.log('Updating teams state with:', teamsStates);
+            for (let i = 0; i < teamsStates.length; i++) {
+                if (!t[i]) continue;
+                for (const key of Object.keys(teamsStates[i]) as (keyof TeamUpdate)[]) {
+                    if (!key) continue;
+                    if (teamsStates[i][key] !== undefined && teamsStates[i][key] !== null) {
+                        if (key === 'finishTime' || key === 'startTime') {
+                            (t[i] as any)[key] = new Date(teamsStates[i][key] as string);
+                        }
+                        else
+                            (t[i] as any)[key] = teamsStates[i][key];
+                    }
+                }
+            }
+            _setTeams([...t]);
+            return true;
+        } catch (error) {
+            console.error('Error updating teams state:', error);
+            console.log('teamsStates:', teamsStates, teams);
+            return false;
+        }
+    }
     React.useEffect(() => {
-        const interval = setInterval(() => {
-            if (Date.now() - lastTick.current.time < 248) {
+        if (!tickerState) {
+            if (ticker.current) {
+                clearInterval(ticker.current);
+                ticker.current = null;
+            }
+            return;
+        }
+        ticker.current = setInterval(() => {
+            const now = performance.now();
+            if (now - lastTick.current.time < 249) {
                 return;
             }
             // const delta = Date.now() - lastTick.current.time;
-            lastTick.current = { tickNum: (lastTick.current.tickNum + 1) % 7, time: Date.now() };
+            lastTick.current = { tickNum: (lastTick.current.tickNum + 1) % 8, time: now };
             const t = teams;
             let updated = false;
             for (let i = 0; i < t.length; i++) {
@@ -161,20 +259,17 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
                     cont.state = 'finished';
                     cont.finishTime = new Date();
                     updated = true;
-                    toast.success(`Team ${cont.name} has finished!`, {
-                        duration: 4000,
-                        position: 'top-center',
-                    });
+                    useToast('success', `Team ${cont.name} has finished!`);
                 }
             }
             if (updated) {
                 _setTeams([...t]);
             }
         }, 5);
-        return () => clearInterval(interval);
-    }, [teams]);
+        return () => clearInterval(ticker.current!);
+    }, [teams, tickerState]);
     return (
-        <TimerContext.Provider value={{ teams, rearmChrono, setTeams, startChrono, pauseChrono, finishChrono, addTime, unpauseChrono, setSpeed }}>
+        <TimerContext.Provider value={{ updateTeamsState, teams, rearmChrono, setTeams, startChrono, pauseChrono, finishChrono, addTime, unpauseChrono, setSpeed, startTicker, stopTicker, setTeamsFromConfig }}>
             {children}
         </TimerContext.Provider>
     );

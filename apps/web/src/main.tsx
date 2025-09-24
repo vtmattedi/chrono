@@ -6,31 +6,47 @@ import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router-dom";
 import { GlobalProvider } from './Providers/Globals.tsx';
 import { AlertProvider } from './Providers/Alerts.tsx';
-import  Teams  from './Pages/Teams.tsx';
+import Teams from './Pages/Teams.tsx';
 import { Toaster } from "@/components/ui/sonner"
 import Chrono from './Pages/Chrono.tsx';
 import Layout from './Layout.tsx';
 import { TimerProvider } from './Providers/Timer.tsx';
+import { SocketProvider } from './Providers/Socket.tsx';
+import ChronoSession from './Pages/Session.tsx';
+import Home from './Pages/Home.tsx';
+import Admin from './Pages/admin.tsx';
 const router = createBrowserRouter([
   {
     path: "/",
+    element: <Layout><Home /></Layout>,
+  },
+  {
+    path: "/teams",
     element: <Layout><Teams /></Layout>,
   },
   {
     path: "/chrono",
     element: <Layout><Chrono /></Layout>,
+  }, {
+    path: "/session",
+    element: <Layout><ChronoSession /></Layout>,
+  }, {
+    path: "/admin",
+    element: <Layout><Admin /></Layout>,
   }
 
 ]);
 createRoot(document.getElementById('root')!).render(
 
-    <AlertProvider>
-      <GlobalProvider>
-        <TimerProvider>
+  <AlertProvider>
+    <GlobalProvider>
+      <TimerProvider>
+        <SocketProvider>
           <RouterProvider router={router} />
-          <Toaster  richColors/>
-        </TimerProvider>
-      </GlobalProvider>
-    </AlertProvider>
+          <Toaster richColors closeButton/>
+        </SocketProvider>
+      </TimerProvider>
+    </GlobalProvider>
+  </AlertProvider>
 
 )

@@ -1,4 +1,4 @@
-import  { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -9,6 +9,7 @@ import {
     AlertDialogTitle,
     AlertDialogAction
 } from "@/components/ui/alert-dialog"
+import { toast } from 'sonner';
 
 interface Alert {
     message: ReactNode;
@@ -17,10 +18,13 @@ interface Alert {
 
 }
 
+type ToastTypes = 'success' | 'error' | 'info' | 'warning';
+
 interface AlertContextProps {
     alert: Alert | null;
     showAlert: (message: ReactNode, title: ReactNode, onResult?: (result: boolean) => void) => void;
     clearAlert: () => void;
+    useToast: (type: ToastTypes, message: string) => void;
 }
 
 const AlertContext = createContext<AlertContextProps | undefined>(undefined);
@@ -45,10 +49,25 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
         setAlert(null);
         setAlertVisible(false);
     };
-   
+
+    // const useToast = (type, message) => {
+    //     const data = {
+
+    //     }
+    //     toast[type]?.(message, {
+    //         duration: 4000,
+    //         description: `${new Date().toLocaleTimeString()}`,
+    //     });
+    // }
+    const useToast = (type: ToastTypes, message: string) => {
+        toast[type]?.(message, {
+            duration: 3000,
+            description: `${new Date().toLocaleTimeString()}`,
+        });
+    }
     return (
 
-        <AlertContext.Provider value={{ alert, showAlert, clearAlert }}>
+        <AlertContext.Provider value={{ alert, showAlert, clearAlert, useToast }}>
             {children}
             <AlertDialog open={alertVisible} onOpenChange={(open) => {
                 if (!open) {

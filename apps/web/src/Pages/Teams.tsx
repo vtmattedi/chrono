@@ -5,16 +5,18 @@ import { ArrowRight } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { type Team, useTimer } from '../Providers/Timer.tsx';
-import { toast } from "sonner"
 import { Switch } from '@/components/ui/switch.tsx';
+import { useGlobals } from '@/Providers/Globals.tsx';
+import { useAlert } from '@/Providers/Alerts.tsx';
 const MAXTEAMS = 20;
 const Teams: React.FC = () => {
     const [teams, setTeams] = React.useState<Team[]>(Array.from({ length: MAXTEAMS }, () => ({ name: '', baseTime: 0, state: 'ready', timeLeft: 0 })));
     const [numberOfTeams, setNumberOfTeams] = React.useState(5);
     const [timeInput, setTimeInput] = React.useState('00:30:00');
+    const { token } = useGlobals();
     const Navigate = useNavigate();
     const { setTeams: setGlobalTeams } = useTimer();
-
+    const { useToast } = useAlert();
     const updateSavedConfig = (part: 'time' | 'team' | 'numberOfTeams') => {
         const savedConfig = localStorage.getItem('savedConfig');
         if (savedConfig) {
@@ -34,10 +36,8 @@ const Teams: React.FC = () => {
         }
         else {
             localStorage.setItem('savedConfig', JSON.stringify({ time: timeInput, team: teams, numberOfTeams: numberOfTeams }));
-
         }
     }
-
 
     useEffect(() => {
         const savedConfig = localStorage.getItem('savedConfig');
@@ -64,6 +64,21 @@ const Teams: React.FC = () => {
     useEffect(() => {
         updateSavedConfig('time');
     }, [timeInput]);
+
+
+    const configureAndSetTeams = (): Team[] => {
+        const t = teams;
+        for (let i = 0; i < t.length; i++) {
+            if (!t[i].name || t[i].name.trim() === '') {
+                t[i].name = `Equipe ${i + 1}`;
+            }
+            t[i].baseTime = timeInput.split(':').reduce((acc, time) => (60 * acc) + +time, 0);
+        }
+        const newTeams = teams.slice(0, numberOfTeams);
+        console.log('Configured teams:', newTeams);
+        setGlobalTeams(newTeams);
+        return newTeams;
+    }
     return (
         <div className='min-h-screen flex flex-col items-center justify-start  w-screen p-4 font-inter'>
             <Card className='p-4 mt-4 w-full max-w-4xl items-center'>
@@ -98,19 +113,12 @@ const Teams: React.FC = () => {
                     </div>
                     <Button className=' bg-[#4C6F50] text-white hover:bg-[#3e5c40] w-32 text-xl justify-center items-center'
                         onClick={() => {
-                            const t = teams;
-                            for (let i = 0; i < t.length; i++) {
-                                if (!t[i].name || t[i].name.trim() === '') {
-                                    t[i].name = `Equipe ${i + 1}`;
-                                }
-                                t[i].baseTime = timeInput.split(':').reduce((acc, time) => (60 * acc) + +time, 0);
-                            }
-                            setGlobalTeams(t.slice(0, numberOfTeams));
-                            toast.success("Equipes configuradas!");
+                            configureAndSetTeams();
+                            useToast('success', 'Equipes configuradas!');
                             const start = (document.getElementById('countdowntoggle') as HTMLButtonElement).ariaChecked;
                             Navigate('/chrono' + (start === 'true' ? '?start=true' : ''));
                         }}
-                    >Start <ArrowRight  /></Button>
+                    >Start <ArrowRight /></Button>
                 </div>
                 <Card className='flex flex-col gap-2 w-[80%] max-h-[60vh] overflow-y-auto p-4' >
                     {
@@ -136,6 +144,34 @@ const Teams: React.FC = () => {
                 </Card>
 
             </Card>
+            <Button className='mt-4 bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 text-black dark:text-white'
+                disabled={!token}
+                onClick={() => {
+                    const t = configureAndSetTeams();
+                    const baseTime = t[0]?.baseTime || 0;
+                    console.log('Creating session with with token:', token);
+                    fetch('http://localhost:4500/api/newsession', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            teams: t.map(t => t.name),
+                            initialTime: baseTime,
+                        }),
+                    }).then(res => res.json()).then(data => {
+                        console.log('Created session:', data);
+                        Navigate('/session?sessionId=' + data.sessionId);
+                    }).catch(err => {
+                        console.error('Error creating session:', err);
+                        useToast('error', 'Error creating session: ' + err.message);
+                    });
+                }}>
+                create session
+                <ArrowRight className='ml-2' />
+
+            </Button>
         </div>
     );
 };

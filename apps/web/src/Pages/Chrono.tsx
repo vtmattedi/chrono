@@ -5,24 +5,23 @@ import { Button } from '@/components/ui/button.tsx';
 import { Plus, Minus, RotateCcw, Settings, PlusCircle, Download } from 'lucide-react';
 import { PlayBtn, PauseBtn, StopBtn, SpeedControl } from '../components/btns.tsx';
 
-import { toast } from 'sonner';
+
 import { useNavigate } from 'react-router';
 import { Input } from '@/components/ui/input.tsx';
 import { useAlert } from '@/Providers/Alerts.tsx';
+import TeamCards from '@/components/TeamCards.tsx';
 
 const Chrono: React.FC = () => {
     const { teams, startChrono, pauseChrono, finishChrono, addTime, rearmChrono, setTeams, setSpeed } = useTimer();
     const [values, setValues] = React.useState<string[]>(teams.map(() => '05:00'));
-    const { showAlert } = useAlert();
+    const { showAlert, useToast } = useAlert();
     const navigate = useNavigate();
+    const { startTicker, stopTicker } = useTimer();
     useEffect(() => {
         if (teams.length === 0) {
             const savedConfig = localStorage.getItem('savedConfig');
             if (!savedConfig) {
-                toast.error('No teams configured. Redirecting to setup page.', {
-                    duration: 4000,
-                    position: 'top-center',
-                });
+                useToast('error', 'No teams configured. Redirecting to setup page.');
                 navigate('/');
             }
             else {
@@ -38,14 +37,19 @@ const Chrono: React.FC = () => {
                 const _teams = t.slice(0, config.numberOfTeams)
                 console.log('Setting teams from saved config:', _teams, t, config.numberOfTeams);
                 setTeams(_teams);
+                
                 setValues(_teams.map(() => "05:00"));
             }
         }
         const params = new URLSearchParams(window.location.search);
+        startTicker();
         if (params.get('start') === 'true') {
             startChrono(teams.map((_, i) => i));
         }
 
+        return () => {
+            stopTicker();
+        }
     }, []);
     const maxName = (name: string) => {
         if (name.length > 18) {
@@ -53,6 +57,7 @@ const Chrono: React.FC = () => {
         }
         return name;
     }
+
     return (
         <div className='h-full flex flex-col items-center justify-start  w-screen p-4 font-inter'>
             <Card className='items-center gap-1 p-2'>
@@ -118,99 +123,21 @@ const Chrono: React.FC = () => {
                 </div>
             </Card>
             <div className='flex flex-row flex-wrap justify-center'>
-                {teams.map((team, index) => (
-                    <Card key={index} className='m-2 p-4 w-80 gap-2'>
-                        <div className='flex justify-between items-center'>
-                            <h2 className='font-lato text-xl mb-2'>{maxName(team.name)}</h2>
-                            <span
-                                // 2f6298ff
-                                style={{
-                                    color: team.state === 'ready' ? '#2f6298ff' : team.state === 'running' ? 'green' : team.state === 'paused' ? 'orange' : 'red',
-                                }}
-                            >{team.state[0].toLocaleUpperCase() + team.state.slice(1)}</span>
-                        </div>
-                        <hr />
-                        {
-                            team.state === 'finished' && team.finishTime ? (
-                                <div className='w-full flex flex-col items-center gap-0'>
-                                    <div className='text-sm text-gray-500 mb-2'>
-                                        Finished at: {team.finishTime.toLocaleTimeString()}
-                                    </div>
-                                    <div className='flex justify-between items-center w-full px-4'>
-                                        <span className='text-muted-foreground text-sm'>Paused Time:</span>
-                                        <span className='font-inter text-2xl'>
-                                            {new Date((team.timePaused || 0) * 1000).toISOString().slice(14, 19)}
-                                        </span>
-                                    </div>
-                                    <div className='flex justify-between items-center w-full px-4'>
-                                        <span className='text-muted-foreground text-sm'>Running Time:</span>
-                                        <span className='font-inter text-2xl'>
-                                            {new Date((team.timeRunning || 0) * 1000).toISOString().slice(14, 19)}
-                                        </span>
-                                    </div>
-                                    <div className='flex justify-between items-center w-full px-4'>
-                                        <span className='text-muted-foreground text-sm'>Added Time:</span>
-                                        <span className='font-inter text-lg text-green-500'>
-                                            {new Date((team.timeAdded || 0) * 1000).toISOString().slice(14, 19)}
-                                        </span>
-                                    </div>
-                                    <div className='flex justify-between items-center w-full px-4'>
-                                        <span className='text-muted-foreground text-sm'>Sub'ed Time:</span>
-                                        <span className='font-inter text-lg text-red-500'>
-                                            {new Date((team.timeSubtracted || 0) * 1000).toISOString().slice(14, 19)}
-                                        </span>
-                                    </div>
-                                    {/* <div className='flex justify-between items-center w-full px-4'>
-                                        <span className='text-sm text-red-500'>-{team.timeSubtracted || 0}</span>
-                                        <span className='text-sm text-green-500'>+{team.timeAdded || 0}</span>
-                                    </div> */}
-                                    <Button className='bg-blue-500 text-white mt-2' onClick={() => rearmChrono([index])}><RotateCcw className='rotate-275' /><span>Reset</span></Button>
-                                </div>
-                            ) : (<>
-                                <div className='flex justify-center items-center text-4xl h-full'>
-                                    <p className='font-inter'>{new Date(team.timeLeft * 1000).toISOString().slice(11, 19)}</p>
-                                </div>
-                                <div className='flex flex-col items-center gap-2 '>
-                                    <div className='flex items-center w-full'>
-                                        <Button onClick={() => {
-                                            const [m, s] = values[index].split(':').map(Number);
-                                            const totalSeconds = m * 60 + s;
-                                            addTime([index], -totalSeconds);
-                                        }} className='m-2 bg-blue-500 text-white'>
-                                            <Minus /> Sub
-                                        </Button>
-                                        <Input type="time" value={values[index]} className='w-24 text-center'
-                                            onChange={(e) => {
-                                                setValues((prev) => {
-                                                    const newValues = [...prev];
-                                                    newValues[index] = e.target.value;
-                                                    return newValues;
-                                                })
-                                            }} />
-                                        <Button onClick={() => {
-                                            const [m, s] = values[index].split(':').map(Number);
-                                            const totalSeconds = m * 60 + s;
-                                            addTime([index], totalSeconds);
-                                        }} className='m-2 bg-blue-500 text-white'>
-                                            <Plus /> Add
-                                        </Button>
-
-                                    </div>
-                                    <div className='flex flex-wrap gap-2 '>
-                                        <PlayBtn state={team.state} onClick={() => startChrono([index])} />
-                                        <PauseBtn state={team.state} onClick={() => pauseChrono([index])} />
-                                        <StopBtn state={team.state} onClick={() => finishChrono([index])} />
-                                    </div>
-                                    <div>
-                                        <SpeedControl state={team.state} speed={team.speed || 1} setSpeed={(speed: SpeedType) => { setSpeed([index], speed); }} />
-                                    </div>
-                                </div>
-                            </>)
-                        }
-
-                    </Card>
-                ))}
-
+                <TeamCards onAction={(action, index) => {
+                    if (action === 'start') startChrono(index);
+                    else if (action === 'pause') pauseChrono(index);
+                    else if (action === 'finish') finishChrono(index);
+                    else if (action === 'rearm') rearmChrono(index);
+                    else if (action.startsWith('add:')) {
+                        const seconds = parseInt(action.split(':')[1]);
+                        if (!seconds) return;
+                        addTime(index, seconds);
+                    }
+                    else if (action.startsWith('speed:')) {
+                        const speed = parseFloat(action.split(':')[1]);
+                        setSpeed(index, speed as SpeedType);
+                    }
+                }} />
             </div>
         </div>
     );

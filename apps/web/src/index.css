@@ -184,3 +184,25 @@ button {
   font-weight: 400;
   font-style: normal;
 }
+
+.timeInput {
+  width: 4.5rem;
+}
+.timeInput:focus {
+  border-color: none;
+  box-shadow: none;
+  outline: none;
+}
+
+/* For Chrome, Safari, Edge, and Opera (WebKit browsers) */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* For Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield; /* Standard property for other browsers */
+}
