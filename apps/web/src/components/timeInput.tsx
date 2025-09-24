@@ -7,7 +7,7 @@ interface TimeInputProps extends React.HTMLAttributes<HTMLInputElement> {
 
 const TimeInput: React.FC<TimeInputProps> = ({ seconds, setSeconds, ...props }) => {
     const inputRef = React.useRef<HTMLInputElement>(null);
-    const timer = React.useRef<NodeJS.Timeout | null>(null);
+    // const timer = React.useRef<NodeJS.Timeout | null>(null);
     const secondsToTime = (secs: number) => {
         const minutes = Math.floor(secs / 60);
         const seconds = secs % 60;

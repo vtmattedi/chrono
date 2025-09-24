@@ -1,13 +1,12 @@
-import React, { use, useEffect } from 'react';
-import { useTimer, type SpeedType, type Team } from '../Providers/Timer.tsx';
+import React from 'react';
+import { useTimer} from '../Providers/Timer.tsx';
 import { Card } from '@/components/ui/card.tsx';
 import { useNavigate, useLocation } from 'react-router';
 import { useSocket } from '@/Providers/Socket.tsx';
 import { useGlobals } from '@/Providers/Globals.tsx';
 import TeamCards from '@/components/TeamCards.tsx';
 import { useAlert } from '@/Providers/Alerts.tsx';
-import { Button } from '@/components/ui/button.tsx';
-import { Copy, RotateCcw, Share2, Share2Icon, Squircle } from 'lucide-react';
+import { Copy, RotateCcw, Squircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { AllButtons } from '@/components/btns.tsx';
 

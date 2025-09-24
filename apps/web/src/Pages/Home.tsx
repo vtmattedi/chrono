@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowRight, PlusCircle } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { type Team, useTimer } from '../Providers/Timer.tsx';
+import { type Team } from '../Providers/Timer.tsx';
 
 import { useGlobals } from '@/Providers/Globals.tsx';
 const MAXTEAMS = 20;
@@ -15,7 +15,7 @@ const Teams: React.FC = () => {
     const { token } = useGlobals();
     const [showSessionInput, setShowSessionInput] = React.useState(false);
     const Navigate = useNavigate();
-    const { setTeams: setGlobalTeams } = useTimer();
+    // const { setTeams: setGlobalTeams } = useTimer();
 
     const updateSavedConfig = (part: 'time' | 'team' | 'numberOfTeams') => {
         const savedConfig = localStorage.getItem('savedConfig');
@@ -66,19 +66,7 @@ const Teams: React.FC = () => {
     }, [timeInput]);
 
 
-    const configureAndSetTeams = (): Team[] => {
-        const t = teams;
-        for (let i = 0; i < t.length; i++) {
-            if (!t[i].name || t[i].name.trim() === '') {
-                t[i].name = `Equipe ${i + 1}`;
-            }
-            t[i].baseTime = timeInput.split(':').reduce((acc, time) => (60 * acc) + +time, 0);
-        }
-        const newTeams = teams.slice(0, numberOfTeams);
-        console.log('Configured teams:', newTeams);
-        setGlobalTeams(newTeams);
-        return newTeams;
-    }
+  
     const btnClass = 'w-43 bg-[#4C6F50] text-white hover:bg-[#3e5c40]  justify-between items-center flex h-12';
     return (
         <div className='h-full flex flex-col items-center justify-start  w-screen p-4 font-inter'>

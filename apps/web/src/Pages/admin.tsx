@@ -4,7 +4,6 @@ import React from 'react';
 import { RotateCcw } from 'lucide-react';
 import { useGlobals } from '@/Providers/Globals';
 import { useAlert } from '@/Providers/Alerts';
-import { useNavigate } from 'react-router';
 
 const Admin: React.FC = () => {
     const [users, setUsers] = React.useState<any>([]);
@@ -17,7 +16,6 @@ const Admin: React.FC = () => {
     }
     const { token, alias } = useGlobals();
     const { useToast } = useAlert();
-    const Navigate = useNavigate();
     const [colors, setColors] = React.useState<string[]>([]);
     React.useEffect(() => {
         const availableColors = ['#FF6633', '#FFB399', '#FF33FF', '#FFFF99', '#00B3E6',
@@ -60,7 +58,7 @@ const Admin: React.FC = () => {
                     <div className='flex flex-row items-center gap-1'>
                         {!loading && <Button onClick={fetchData} className='h-6'><RotateCcw />Refresh</Button>}
                         <p className='text-sm text-muted-foreground'>
-                            {loading ? (<>Loading...</>) : (<>{lastFetched.toLocaleTimeString()}</>)}
+                            {loading ? (<>Loading...</>) : (<>{getDateDiff()}</>)}
                         </p>
                     </div>
                 </div>

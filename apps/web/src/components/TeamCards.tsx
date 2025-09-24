@@ -1,6 +1,5 @@
 import React from 'react';
 import { Button } from './ui/button';
-import { Input } from './ui/input';
 import { RotateCcw, Plus, Minus } from 'lucide-react';
 import { useTimer, type SpeedType } from '../Providers/Timer';
 import { Card } from './ui/card';

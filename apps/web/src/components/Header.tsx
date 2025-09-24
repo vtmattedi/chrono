@@ -2,17 +2,14 @@ import React from 'react';
 
 import ThemeSelector from './ThemeSelector';
 import confetti from 'canvas-confetti';
-import { List, MenuIcon, Timer } from 'lucide-react';
+import {  MenuIcon, Timer } from 'lucide-react';
 import { useGlobals } from '../Providers/Globals';
-import { Button } from './ui/button';
 import {
     Sheet,
     SheetContent,
     SheetDescription,
     SheetFooter,
     SheetHeader,
-    SheetTitle,
-    SheetTrigger,
 } from "@/components/ui/sheet"
 const Header: React.FC = () => {
 

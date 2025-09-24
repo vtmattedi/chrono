@@ -2,18 +2,16 @@ import React, { useEffect } from 'react';
 import { useTimer, type SpeedType, type Team } from '../Providers/Timer.tsx';
 import { Card } from '@/components/ui/card.tsx';
 import { Button } from '@/components/ui/button.tsx';
-import { Plus, Minus, RotateCcw, Settings, PlusCircle, Download } from 'lucide-react';
-import { PlayBtn, PauseBtn, StopBtn, SpeedControl } from '../components/btns.tsx';
+import {  RotateCcw, Settings, PlusCircle, Download } from 'lucide-react';
 
 
 import { useNavigate } from 'react-router';
-import { Input } from '@/components/ui/input.tsx';
 import { useAlert } from '@/Providers/Alerts.tsx';
 import TeamCards from '@/components/TeamCards.tsx';
 
 const Chrono: React.FC = () => {
     const { teams, startChrono, pauseChrono, finishChrono, addTime, rearmChrono, setTeams, setSpeed } = useTimer();
-    const [values, setValues] = React.useState<string[]>(teams.map(() => '05:00'));
+
     const { showAlert, useToast } = useAlert();
     const navigate = useNavigate();
     const { startTicker, stopTicker } = useTimer();
@@ -38,7 +36,7 @@ const Chrono: React.FC = () => {
                 console.log('Setting teams from saved config:', _teams, t, config.numberOfTeams);
                 setTeams(_teams);
                 
-                setValues(_teams.map(() => "05:00"));
+                // setValues(_teams.map(() => "05:00"));
             }
         }
         const params = new URLSearchParams(window.location.search);
@@ -51,13 +49,7 @@ const Chrono: React.FC = () => {
             stopTicker();
         }
     }, []);
-    const maxName = (name: string) => {
-        if (name.length > 18) {
-            return name.slice(0, 15) + '...';
-        }
-        return name;
-    }
-
+   
     return (
         <div className='h-full flex flex-col items-center justify-start  w-screen p-4 font-inter'>
             <Card className='items-center gap-1 p-2'>
