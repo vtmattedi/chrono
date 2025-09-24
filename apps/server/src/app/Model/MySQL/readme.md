@@ -1,0 +1,1 @@
+This folder contains th e old database files that used MySQL instead of NEON's POSTGRESS.
