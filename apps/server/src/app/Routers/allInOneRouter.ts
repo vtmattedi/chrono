@@ -38,6 +38,19 @@ allRouter.get("/api/listusers", (req, res) => {
         res.status(200).json({ users });
 });
 
+allRouter.get("/webhook/frontend", (req, res) => {
+    res.status(200).send("Received");
+    console.log("Pulling new code from GitHub")
+    const { exec } = require('child_process');
+    exec('node run.js', (error: any, stdout: any, stderr: any) => {
+        if (error) {
+            console.error(`Error executing script: ${error}`);
+            return;
+        }
+        console.log(`stdout: ${stdout}`);
+        console.error(`stderr: ${stderr}`);
+    });
+});
 
 export { allRouter };
 
