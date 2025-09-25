@@ -18,7 +18,7 @@ const ChronoSession: React.FC = () => {
     const [sessionId, setSessionId] = React.useState<string>('');
     const navigate = useNavigate();
     const location = useLocation();
-    const { joinSession, leaveSession, state, sendAction, userCount, adminRole, stage } = useSocket();
+    const { joinSession, leaveSession, state, sendAction, userCount, adminRole, stage, latency } = useSocket();
 
     React.useEffect(() => {
         // Joining the session from the URL
@@ -68,7 +68,9 @@ const ChronoSession: React.FC = () => {
                     ><Squircle
                             className={state ? 'animate-pulse' : ''}
                             fill={state ? 'green' : 'red'}
-                        /></div>
+                        />
+                            {(latency || 0 ).toFixed(0)}ms
+                        </div>
 
                 </div>
                 <div className='flex justify-between items-center'>

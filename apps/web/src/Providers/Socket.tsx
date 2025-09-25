@@ -14,6 +14,7 @@ type SocketState = {
     state: boolean;
     adminRole: boolean;
     stage: number;
+    latency?: number;
 };
 
 const SocketContext = createContext<SocketState | undefined>(undefined);
@@ -40,6 +41,9 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     const [userCount, setUserCount] = useState<number>(0);
     const [stage, setStage] = useState<number>(0);
     const [adminRole, setAdminRole] = useState<boolean>(false);
+    const [latency, setLatency] = useState<number | undefined>(undefined);
+    const pingRef = React.useRef<number | null>(null);
+    const pingIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
     const socket = React.useRef<Socket>(io(BASE_URL, {
         autoConnect: false,
     }));
@@ -105,7 +109,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
                 setAdminRole(message.role === 'admin');
                 setUserCount(userCount);
                 if (message.config) {
-                    const teams = JSON.parse(message.config) ;
+                    const teams = JSON.parse(message.config);
                     setTeamsFromConfig(teams);
                 }
                 if (message.state) {
@@ -135,11 +139,28 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             setUserCount(userCount);
         }
     }
+
+    const startPing = () => {
+        if (pingIntervalRef.current) return; // already running
+        pingIntervalRef.current = setInterval(() => {
+            if (socket.current.connected) {
+                pingRef.current = performance.now();
+                socket.current.emit('ping');
+            }
+        }, 5000);
+    }
+    const cleanLatency = () => {
+        if (pingIntervalRef.current) {
+            clearInterval(pingIntervalRef.current);
+            pingIntervalRef.current = null;
+        }
+        pingRef.current = null;
+        setLatency(undefined);
+    }
+
     const joinSession = (sessionId: string, onFailed: (message: string) => void) => {
-
-
         if (!token) {
-            useToast('error','No token available for socket connection');
+            useToast('error', 'No token available for socket connection');
             return false;
         }
         socket.current = io(BASE_URL, {
@@ -164,6 +185,12 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             useToast('error', 'Disconnected from server');
             setSessionId('');
             setStage(0);
+            if (pingIntervalRef.current) {
+                clearInterval(pingIntervalRef.current);
+                pingIntervalRef.current = null;
+            }
+            pingRef.current = null;
+            setLatency(undefined);
         });
         socket.current.on('connect_error', (err) => {
             setState(false);
@@ -193,10 +220,16 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             const userCount = parseInt(message);
             setUserCount(userCount);
         });
+        socket.current.on('pong', () => {
+            const pongTime = performance.now();
+            const pingTime = pingRef.current || 0;
+            setLatency(pongTime - pingTime);
+        });
         setStage(1);
+        startPing();
         return true;
-    }
 
+    }
     const leaveSession = () => {
         if (socket.current.connected) {
             socket.current.offAny(); // clean disconnect 
@@ -208,6 +241,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         socket.current = io(BASE_URL, {
             autoConnect: false,
         });
+        cleanLatency();
     }
     React.useEffect(() => {
         return () => {
@@ -215,7 +249,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         };
     }, []);
     return (
-        <SocketContext.Provider value={{ state, joinSession, leaveSession, sendAction, userCount, adminRole, stage}}>
+        <SocketContext.Provider value={{ state, joinSession, leaveSession, sendAction, userCount, adminRole, stage, latency }}>
             {children}
         </SocketContext.Provider>
     );
