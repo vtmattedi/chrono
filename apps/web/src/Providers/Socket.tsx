@@ -244,12 +244,12 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
     }
 
-    const enterSession = (sessionId: string) => {
-        if (!token) {
-            useToast('error', 'No token available for socket connection');
-            return false;
-        }
-    }
+    // const enterSession = (sessionId: string) => {
+    //     if (!token) {
+    //         useToast('error', 'No token available for socket connection');
+    //         return false;
+    //     }
+    // }
 
     const leaveSession = () => {
         if (socket.current.connected) {
