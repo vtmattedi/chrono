@@ -8,6 +8,7 @@ import { Asserter, assertDotEnv } from '../Asserter';
 import { getUserById, deleteUser } from "../Model/user";
 import { chronoHandler } from '../../chrono';
 import { Team } from '../../Teams';
+import { userHandler } from "../../users";
 
 
 /**
@@ -35,8 +36,13 @@ class ChronoController {
         let payload: any;
         try {
             payload = jwt.verify(token, process.env.JWT_SECRET as string);
-
+            const user = userHandler.getUserById(payload.userId);
+            if (!user) {
+                res.status(401).json({ message: 'Invalid token' });
+                return;
+            }
             const chrono = chronoHandler.createChrono(payload.userId, teams, initialTime, start === true);
+            console.log("Created session with ID:", chrono.sessionId, "for user:", user.userId, "alias:", user.alias);
             res.status(200).json({ sessionId: chrono.sessionId });
             return;
         } catch (err) {

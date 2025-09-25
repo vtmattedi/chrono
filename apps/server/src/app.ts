@@ -43,9 +43,10 @@ class Server extends BasicServer {
 
   constructor() {
     super();
+    const corsOrigin = process.env.NODE_ENV === 'production' ? 'https://mwchrono.vercel.app' : 'http://localhost:5173';
     this.middleware();
     this.withCookies();
-    this.withcors('https://mwchrono.vercel.app');
+    this.withcors(corsOrigin);
     this.router(allRouter); /*Router for Apis + Auth*/
 
     /*Serves the React Page*/
@@ -58,7 +59,7 @@ class Server extends BasicServer {
     }
     else {
       this.server.use('*', (req, res) => {
-        res.redirect(301, 'https://mwchrono.vercel.app');
+        res.redirect(301, corsOrigin);
       });
     }
 
@@ -66,7 +67,7 @@ class Server extends BasicServer {
     this.httpServer = http.createServer(this.server);
     this.io = new SocketIOServer(this.httpServer, {
       cors: {
-        origin: 'https://mwchrono.vercel.app',
+        origin: corsOrigin,
         credentials: true,
       }
     });

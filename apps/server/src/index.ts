@@ -33,10 +33,10 @@ const startServer = (port: number) => {
 startServer(Number(process.env.PORT ?? 4500));
 chronoHandler.onChronoCreated = (chrono) => {
     chrono.onUpdate = (data, full) => {
-        if (full){
+        if (full) {
             app.io.to(chrono.sessionId).emit('fulltick', data);
         }
-        else{
+        else {
             app.io.to(chrono.sessionId).emit('tick', data);
         }
     }
@@ -44,8 +44,6 @@ chronoHandler.onChronoCreated = (chrono) => {
 chronoHandler.startAfkCheck(30); // minutes
 
 app.io.on("connection", (socket) => {
-    
-    userHandler.addSocket(socket.handshake.address, socket.id);
     socket.on("disconnect", () => {
         const userId = userHandler.getUserId(socket.id);
         userHandler.removeSocket(socket.id);
@@ -56,7 +54,7 @@ app.io.on("connection", (socket) => {
             socket.leave(room);
         });
     });
-    
+
     socket.on("message", (msg) => {
         const data = JSON.parse(msg);
         if (data.type === "identify") {
@@ -68,7 +66,12 @@ app.io.on("connection", (socket) => {
             let payload: any;
             try {
                 payload = jwt.verify(data.message, process.env.JWT_SECRET as string);
-                socket.send(JSON.stringify({ type: "info", message: "You are identified with alias: " + payload.alias }));
+                userHandler.addSocket(payload.userId, socket.id, socket.handshake.address);
+                socket.send(JSON.stringify({ type: "identify_result", message: {
+                    success: true,
+                    userId: payload.userId,
+                    alias: payload.alias
+                } }));
             } catch (err) {
                 socket.send(JSON.stringify({ type: "error", message: "Invalid token, disconnecting" }));
                 socket.disconnect();
@@ -79,10 +82,12 @@ app.io.on("connection", (socket) => {
         }
         else if (data.type === "join") {
             const sessionId = data.message;
+            console.log(data,data.message);
             const userId = userHandler.getUserId(socket.id);
             const result = chronoHandler.addListener(sessionId, userId);
             const adminRole = chronoHandler['chronos'].get(sessionId)?.isAuthorized(userId);
             const response = { type: "join_result", message: { success: false, errorMessage: "", userCount: result, role: adminRole ? "admin" : "user", config: "", state: "" } };
+            console.log(`User`, userId, `joining session`, sessionId, `from`, socket.id, `result:`, result, `role:`, response.message.role);
             if (result > 0) {
                 const teamsConfig = chronoHandler['chronos'].get(sessionId)?.TeamsConfig() || "{}";
                 response.message.config = teamsConfig;

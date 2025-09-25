@@ -22,7 +22,37 @@ allRouter.post("/api/token", (req, res) => {
         alias: alias || 'anonymous',
         userId: user.userId
     }, process.env.JWT_SECRET as string);
+    console.log("Issued token for userId:", user.userId, "alias:", user.alias);
     res.status(200).json({ token });
+});
+
+allRouter.post("/api/validatetoken", (req, res) => {
+    
+    const  token  = req.headers.authorization ? { token: req.headers['authorization'].split(' ')[1] } :  null ;
+    console.log("Validating token:", token);
+    if (!token || !token) {
+        res.status(400).json({ valid: false, message: 'No token provided' });
+        return;
+    }
+    else {
+        try{
+            const payload = jwt.verify(token.token, process.env.JWT_SECRET as string) as any;
+            const { userId, alias } = payload;
+            const user = userHandler.getUserById(userId);
+            if (!user || user.alias !== alias) {
+                res.status(401).json({ valid: false, message: 'Invalid userId' });
+                console.log("Token invalid, user not found");
+                return;
+            }
+            res.status(200).json({ valid: true, ...payload });
+            console.log("Token valid for userId:", userId, "alias:", alias);
+        } catch (err) {
+            res.status(401).json({ valid: false, message: 'Invalid token' });
+            console.log("Token invalid,");
+        }
+
+    }
+
 });
 
 allRouter.post("/api/newsession", chronoController.startSession);

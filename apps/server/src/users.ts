@@ -6,7 +6,7 @@ type User = {
 }
 
 class UserHandler {
-    public static users: Map<string, User> = new Map();
+    public static users: Map<string, User> = new Map(); // userId -> User
     public static usersBySocket: Map<string, string> = new Map(); // socketId -> userId
 
     public createUser(ip: string, alias: string): User {
@@ -16,17 +16,23 @@ class UserHandler {
         return user;
     }
 
-    public addSocket(ip: string, socketId: string) {
-        const userId = this.getUserId(socketId);
-        if (!UserHandler.users.has(userId)) {
-            const user = this.createUser(ip, 'anonymous');
-            UserHandler.users.set(userId, user);
+    public addSocket(userId: string, socketId: string, ip: string | null = null) {
+        const user = UserHandler.users.get(userId);
+        if (!user) {
+            console.log("User ID not found, creating new user with ID:", userId);
+            const newuser: User = this.createUser(ip || 'unknown', 'anonymous');
+            newuser.socketId.push(socketId);
+            UserHandler.users.set(userId, newuser);
+            console.log("Created new user:", newuser);
+            UserHandler.usersBySocket.set(socketId, userId);
+            console.log("Added socket:", socketId, "to user:", userId);
+            return;
         }
-        const user = UserHandler.users.get(userId) as User;
-        if (!user.socketId.includes(socketId)) {
-            user.socketId.push(socketId);
+        if (!user?.socketId.includes(socketId)) {
+            user?.socketId.push(socketId);
         }
         UserHandler.usersBySocket.set(socketId, userId);
+        console.log("Added socket:", socketId, "to user:", userId);
     }
 
     public issueNewUserId(): string {
@@ -44,6 +50,10 @@ class UserHandler {
             }
         }
 
+    }
+
+    public getUserById(userId: string): User | null {
+        return UserHandler.users.get(userId) || null;
     }
 
     // Get userId by socketId, if not found issue a new one
