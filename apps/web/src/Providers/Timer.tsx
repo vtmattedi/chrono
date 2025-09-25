@@ -17,6 +17,7 @@ export type Team = {
     finishTime?: Date;
     speed?: SpeedType; // speed multiplier (1x, 2x, etc.)
     finalDrift?: number; // in ms, positive or negative
+    stateLocked?: boolean; // if true, state cannot be changed manually
 }
 
 // name: team.name,
@@ -75,6 +76,15 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     const _setTeams = (newTeams: Team[]) => {
         __setTeams(newTeams);
         teamRefs.current = newTeams;
+    }
+    const lockState = (index: number[], lock: boolean) => {
+        const t = teamRefs.current;
+        for (const i of index) {
+            if (t[i]) {
+                t[i].stateLocked = lock;
+            }
+        }
+        _setTeams([...t]);
     }
     const setTeamsFromConfig = (config: TeamConfig) => {
         const _teams: Team[] = [];
@@ -196,6 +206,10 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
             const speed = parseFloat(action.split(':')[1]);
             setSpeed(index, speed as SpeedType);
         }
+        lockState(index, true);
+        setTimeout(() => {
+            lockState(index, false);
+        }, 500);
     }
     const startTicker = () => {
         setTickerState(true);
@@ -222,6 +236,12 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
                     if (teamsStates[i][key] !== undefined && teamsStates[i][key] !== null) {
                         if (key === 'finishTime' || key === 'startTime') {
                             (t[i] as any)[key] = new Date(teamsStates[i][key] as string);
+                        }
+                        else if (key === 'state') {
+                            if (t[i].stateLocked) {
+                                continue;
+                            }
+                            (t[i] as any)[key] = teamsStates[i][key];
                         }
                         else
                             (t[i] as any)[key] = teamsStates[i][key];
