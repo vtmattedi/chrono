@@ -5,7 +5,6 @@ import { useAlert } from '../Providers/Alerts';
 import { useTimer } from './Timer';
 import { BASE_URL } from '@/Providers/Urls.tsx';
 // "undefined" means the URL will be computed from the `window.location` object
-const URL = process.env.NODE_ENV === 'production' ? undefined : BASE_URL + '';
 
 type SocketState = {
     joinSession: (sessionId: string, onFailed: (error: string) => void) => boolean;
@@ -41,7 +40,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     const [userCount, setUserCount] = useState<number>(0);
     const [stage, setStage] = useState<number>(0);
     const [adminRole, setAdminRole] = useState<boolean>(false);
-    const socket = React.useRef<Socket>(io(URL!, {
+    const socket = React.useRef<Socket>(io(BASE_URL, {
         autoConnect: false,
     }));
     const sendData = (data: any) => {
@@ -143,7 +142,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             useToast('error','No token available for socket connection');
             return false;
         }
-        socket.current = io(URL!, {
+        socket.current = io(BASE_URL, {
             autoConnect: false,
         });
         socket.current.connect();
@@ -206,7 +205,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         }
         setStage(0);
         setState(false);
-        socket.current = io(URL!, {
+        socket.current = io(BASE_URL, {
             autoConnect: false,
         });
     }
