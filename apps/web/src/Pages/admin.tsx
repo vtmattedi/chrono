@@ -10,6 +10,8 @@ const Admin: React.FC = () => {
     const [sessions, setSessions] = React.useState<any>([]);
     const [loading, setLoading] = React.useState<boolean>(true);
     const [lastFetched, setLastFetched] = React.useState<Date>(new Date());
+    const [latency, setLatency] = React.useState<number>(0);
+    const ping = React.useRef<number>(0);
     const getDateDiff = () => {
         const diff = Math.floor((new Date().getTime() - lastFetched.getTime()) / 1000);
         return `${diff} seconds ago`;
@@ -29,6 +31,7 @@ const Admin: React.FC = () => {
 
     const fetchData = async () => {
         // setLoading(true);
+        ping.current = performance.now();
         Promise.all([
             fetch(BASE_URL + '/api/listusers').then(res => res.json()),
             fetch(BASE_URL + '/api/listsessions').then(res => res.json())
@@ -42,11 +45,12 @@ const Admin: React.FC = () => {
         }).finally(() => {
             console.log('Finished fetching data');
             setLoading(false);
+            setLatency(performance.now() - ping.current);
         });
     };
     React.useEffect(() => {
         fetchData();
-        const interval = setInterval(fetchData, 1);
+        const interval = setInterval(fetchData, 200);
         return () => clearInterval(interval);
     }, []);
 
@@ -60,6 +64,7 @@ const Admin: React.FC = () => {
                         <p className='text-sm text-muted-foreground'>
                             {loading ? (<>Loading...</>) : (<>{getDateDiff()}</>)}
                         </p>
+                        <>{latency.toFixed(2)}ms</>
                     </div>
                 </div>
                 <div className='w-full flex gap-2 text-wrap'

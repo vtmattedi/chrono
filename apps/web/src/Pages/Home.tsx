@@ -12,7 +12,7 @@ const Teams: React.FC = () => {
     const [teams, setTeams] = React.useState<Team[]>(Array.from({ length: MAXTEAMS }, () => ({ name: '', baseTime: 0, state: 'ready', timeLeft: 0 })));
     const [numberOfTeams, setNumberOfTeams] = React.useState(5);
     const [timeInput, setTimeInput] = React.useState('00:30:00');
-    const { token } = useGlobals();
+    const { token, setToken, setAlias } = useGlobals();
     const [showSessionInput, setShowSessionInput] = React.useState(false);
     const Navigate = useNavigate();
     // const { setTeams: setGlobalTeams } = useTimer();
@@ -71,6 +71,14 @@ const Teams: React.FC = () => {
     return (
         <div className='h-full flex flex-col items-center justify-start  w-screen p-4 font-inter'>
             <Card className='p-4 mt-4 w-full max-w-4xl items-center'>
+                <Button className=' bg-red-500 text-white hover:bg-red-600'
+                    onClick={() => {
+                        setToken(null);
+                        setAlias('webtester');
+                    }}
+                >
+                    delete token
+                </Button>
                 <img className='w-32' src="/logo-nobg.png" alt="Team" />
                 {/* <div className='flex gap-8  w-full justify-center items-center'>
                     <div className='flex gap-2 items-center text-xl'>

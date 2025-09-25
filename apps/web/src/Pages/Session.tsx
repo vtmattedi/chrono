@@ -61,7 +61,7 @@ const ChronoSession: React.FC = () => {
                         </div>
                     </div>
                     <div
-                        className='flex flex-col items-start text-sm justify-end'
+                        className='flex flex-col items-end text-sm '
                         style={{
                             color: state ? 'green' : 'red',
                         }}
@@ -69,7 +69,7 @@ const ChronoSession: React.FC = () => {
                             className={state ? 'animate-pulse' : ''}
                             fill={state ? 'green' : 'red'}
                         />
-                           {stage === 2 && (latency || 0).toFixed(0)}ms
+                           {stage === 4 && (latency || 0).toFixed(0)}ms
                         </div>
 
                 </div>
@@ -102,7 +102,9 @@ const ChronoSession: React.FC = () => {
 
                         }
                         sendAction(action, teams.map((_, i) => i));
-                    }} />
+                    }} 
+                    states={[...teams.map(t => t.state)]}
+                    />
                 </div>
             </Card>
             {
@@ -114,7 +116,7 @@ const ChronoSession: React.FC = () => {
             }
             {
 
-                stage === 2 && (
+                stage === 4 && (
                     <TeamCards onAction={(action, index) => {
                         sendAction(action, index);
                     }} className='mt-4' />

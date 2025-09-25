@@ -37,18 +37,25 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     const { token } = useGlobals();
     const { useToast } = useAlert();
     const { updateTeamsState, setTeamsFromConfig, teams } = useTimer();
-    const [sessionId, setSessionId] = useState<string>('');
+    const [sessionId, _setSessionId] = useState<string>('');
     const [userCount, setUserCount] = useState<number>(0);
     const [stage, setStage] = useState<number>(0);
     const [adminRole, setAdminRole] = useState<boolean>(false);
     const [latency, setLatency] = useState<number | undefined>(undefined);
     const pingRef = React.useRef<number | null>(null);
     const pingIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
+    const sessionIdRef = React.useRef<string>('');
     const socket = React.useRef<Socket>(io(BASE_URL, {
         autoConnect: false,
     }));
+
+    const  setSessionId = (id: string) => {
+        _setSessionId(id);
+        sessionIdRef.current = id;
+    }
+
     const sendData = (data: any) => {
-        if (socket.current.connected) {
+        if (socket.current?.connected) {
             socket.current.send(JSON.stringify(data));
         }
     }
@@ -103,6 +110,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         }
         else if (type === 'join_result') {
             console.log(message, message.success);
+            setStage(4);
             if (message.success) {
                 useToast('success', 'Successfully joined session');
                 const userCount = parseInt(message.userCount);
@@ -138,15 +146,20 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             const userCount = parseInt(message);
             setUserCount(userCount);
         }
+        else if (type === 'identify_result') {
+            setStage(3);
+            sendData({ type: 'join', message: sessionIdRef.current });
+        }
     }
 
     const startPing = () => {
         if (pingIntervalRef.current) return; // already running
-        pingIntervalRef.current = setInterval(() => {
+        pingIntervalRef.current = setTimeout(() => {
             if (socket.current.connected) {
                 pingRef.current = performance.now();
                 socket.current.emit('ping');
             }
+            startPing();
         }, 1000);
     }
     const cleanLatency = () => {
@@ -163,19 +176,19 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             useToast('error', 'No token available for socket connection');
             return false;
         }
+        setStage(1);
         socket.current = io(BASE_URL, {
             autoConnect: false,
         });
         socket.current.connect();
+        setSessionId(sessionId)
+        console.log('connecting to server', sessionId);
         socket.current.on('connect', () => {
             setState(true);
             console.log('Connected to server with token:', token);
             sendData({ type: 'identify', message: token });
-            sendData({ type: 'join', message: sessionId });
-            setSessionId(sessionId);
             useToast('success', 'Connected to session ' + sessionId);
             setStage(2);
-
         });
         socket.current.on('message', (data) => {
             handleMessage(data, onFailed);
@@ -225,11 +238,19 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             const pingTime = pingRef.current || 0;
             setLatency(pongTime - pingTime);
         });
-        setStage(1);
+
         startPing();
         return true;
 
     }
+
+    const enterSession = (sessionId: string) => {
+        if (!token) {
+            useToast('error', 'No token available for socket connection');
+            return false;
+        }
+    }
+
     const leaveSession = () => {
         if (socket.current.connected) {
             socket.current.offAny(); // clean disconnect 
@@ -243,6 +264,9 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         });
         cleanLatency();
     }
+
+
+
     React.useEffect(() => {
         return () => {
             leaveSession();

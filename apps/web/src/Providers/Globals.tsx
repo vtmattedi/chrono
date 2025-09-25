@@ -6,6 +6,7 @@ type GlobalState = {
     setDarkMode: (darkMode: boolean) => void;
     onMobile: boolean;
     token: string | null;
+    setToken: (token: string | null) => void;
     alias: string | null;
     setAlias: (alias: string | null) => void;
 };
@@ -47,7 +48,25 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
         else {
             localStorage.removeItem('alias');
         }
+        requestNewToken(newAlias || 'webclient');
     }
+
+    const verifyToken = async (token: string) => {
+        console.log('Verifying token:', token);
+        return fetch(BASE_URL + '/api/validatetoken', {
+            headers: { 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+             },
+            method: 'POST',
+            body: '{}',
+        }).then(res => res.json()).then(data => {
+            console.log('Token verification response:', data);
+            return data.valid;
+        }).catch(err => {
+            console.error('Error verifying token:', err);
+            return false;
+        });
+    };
     const requestNewToken = async (alias: string) => {
         console.log('Requesting new token for alias:', alias);
         fetch(BASE_URL + '/api/token',{
@@ -68,6 +87,18 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
     React.useEffect(() => {
         console.log('Token changed:', token);
         useToast('info', token ? 'Token set' : 'No token available');
+        if (token) {
+            verifyToken(token).then(isValid => {
+                if (!isValid) {
+                    console.log('Token is invalid, requesting new token');
+                    requestNewToken(alias || 'webclient');
+
+                } else {
+                    console.log('Token is valid');
+                    useToast('success', 'Token is valid');
+                }
+            });
+        }
     }, [token]);
     React.useEffect(() => {
         // On mount, check the preferred theme in local storage or system preference
@@ -102,7 +133,7 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
         };
     }, []);
     return (
-        <GlobalContext.Provider value={{ theme, setDarkMode, onMobile, token, alias, setAlias }}>
+        <GlobalContext.Provider value={{ theme, setDarkMode, onMobile, token, alias, setAlias, setToken }}>
             {children}
         </GlobalContext.Provider>
     );
