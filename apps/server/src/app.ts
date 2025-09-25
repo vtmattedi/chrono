@@ -49,24 +49,31 @@ class Server extends BasicServer {
     this.router(allRouter); /*Router for Apis + Auth*/
 
     /*Serves the React Page*/
-    const frontendFolder = process.env.FRONTEND_FOLDER ?? './front/dist';
-    this.server.use(express.static(path.resolve(frontendFolder)));
-    this.server.use('*', (req, res) => {
-      res.sendFile(path.resolve(frontendFolder + '/index.html'))
-    });
+    if (process.env.SERVER_ONLY === 'false') {
+      const frontendFolder = process.env.FRONTEND_FOLDER ?? './front/dist';
+      this.server.use(express.static(path.resolve(frontendFolder)));
+      this.server.use('*', (req, res) => {
+        res.sendFile(path.resolve(frontendFolder + '/index.html'))
+      });
+    }
+    else {
+      this.server.use('*', (req, res) => {
+        res.redirect(301, 'https://mwchrono.vercel.app');
+      });
+    }
 
     // Create HTTP server and attach Socket.IO
     this.httpServer = http.createServer(this.server);
     this.io = new SocketIOServer(this.httpServer, {
       cors: {
-        origin: 'http://localhost:5173',
+        origin: 'https://mwchrono.vercel.app',
         credentials: true,
       }
     });
 
   }
 
-  
+
 }
 
 export { Server };

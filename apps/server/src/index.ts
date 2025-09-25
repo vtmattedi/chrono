@@ -45,6 +45,7 @@ chronoHandler.startAfkCheck(30); // minutes
 
 app.io.on("connection", (socket) => {
     
+    userHandler.addSocket(socket.handshake.address, socket.id);
     socket.on("disconnect", () => {
         const userId = userHandler.getUserId(socket.id);
         userHandler.removeSocket(socket.id);
@@ -67,7 +68,6 @@ app.io.on("connection", (socket) => {
             let payload: any;
             try {
                 payload = jwt.verify(data.message, process.env.JWT_SECRET as string);
-                userHandler.addSocket(payload.userId, socket.handshake.address, payload.alias, socket.id);
                 socket.send(JSON.stringify({ type: "info", message: "You are identified with alias: " + payload.alias }));
             } catch (err) {
                 socket.send(JSON.stringify({ type: "error", message: "Invalid token, disconnecting" }));
@@ -111,6 +111,11 @@ app.io.on("connection", (socket) => {
         }
     });
 
+    socket.on("ping",
+        () => {
+            socket.send("pong");
+        }
+    )
 
 });
 
