@@ -113,7 +113,7 @@ app.io.on("connection", (socket) => {
 
     socket.on("ping",
         () => {
-            socket.send("pong");
+            socket.emit("pong");
         }
     )
 
