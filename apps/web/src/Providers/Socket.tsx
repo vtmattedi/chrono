@@ -153,13 +153,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     }
 
     const startPing = () => {
-        if (pingIntervalRef.current) return; // already running
         pingIntervalRef.current = setTimeout(() => {
             if (socket.current.connected) {
                 pingRef.current = performance.now();
                 socket.current.emit('ping');
             }
-            startPing();
         }, 1000);
     }
     const cleanLatency = () => {
@@ -237,6 +235,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             const pongTime = performance.now();
             const pingTime = pingRef.current || 0;
             setLatency(pongTime - pingTime);
+            startPing();
         });
 
         startPing();
