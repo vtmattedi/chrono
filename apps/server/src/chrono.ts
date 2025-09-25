@@ -293,13 +293,14 @@ class ChronoHandler {
         return chrono.listeners.length;
     }
 
-    public listChronos(): { sessionId: string; owner: string; listeners: number }[] {
+    public listChronos(): { sessionId: string; owner: string; listeners: number, createdAt: Date }[] {
         const res: any[] = [];
         this.chronos.forEach((chrono) => {
             res.push({
                 sessionId: chrono.sessionId,
                 owner: chrono['owner'],
-                listeners: chrono.listeners.length
+                listeners: [...chrono.listeners],
+                createdAt: chrono['createdAt']
             });
         });
         return res;

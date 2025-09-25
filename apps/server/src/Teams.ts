@@ -2,6 +2,7 @@ type TeamState = 'ready' | 'running' | 'paused' | 'finished';
 type SpeedType = 0.5 | 1 | 2 | 4;
 
 export class Team {
+    private static DRIFT_CHECK_INTERVAL_MS = ((3 * 60) + 11) * 1000; // 3 minutes + 11 seconds
     public name: string;
     public baseTime: number; // in seconds
     public state: TeamState = 'ready';
@@ -16,6 +17,7 @@ export class Team {
     private lastUpdateTime?: number;
     private referenceTime: number = 0;
     public finalDrift = 0; // in ms, final uncorrected drift at finish
+    
     constructor(name: string, baseTime: number) {
         this.name = name;
         this.baseTime = baseTime;
@@ -52,8 +54,7 @@ export class Team {
     public correctDrift(currentMs: number, force: boolean = false) {
         if (!this.lastUpdateTime) return;
         const deltaTime_ms = currentMs - this.lastUpdateTime;
-        // Check for drift every 5 minutes - 10 seconds or if forced
-        if (deltaTime_ms >= (5 * 60 * 1000 - 10 * 1000) || force) {
+        if (deltaTime_ms >= Team.DRIFT_CHECK_INTERVAL_MS || force) {
             const referenceTime_ms = currentMs - this.referenceTime;
             const totalTime_ms = (this.timeRunning + this.timePaused) * 1000;
             const drift_ms = referenceTime_ms - totalTime_ms;
