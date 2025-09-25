@@ -199,7 +199,7 @@ const Teams: React.FC = () => {
                 onClick={() => {
                     const t = configureAndSetTeams();
                     const baseTime = t[0]?.baseTime || 0;
-                    fetch('http://localhost:4500/api/newsession', {
+                    fetch(BASE_URL + '/api/newsession', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

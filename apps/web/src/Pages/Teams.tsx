@@ -8,6 +8,7 @@ import { type Team, useTimer } from '../Providers/Timer.tsx';
 import { Switch } from '@/components/ui/switch.tsx';
 import { useGlobals } from '@/Providers/Globals.tsx';
 import { useAlert } from '@/Providers/Alerts.tsx';
+import { BASE_URL } from '@/Providers/Urls.tsx';
 const MAXTEAMS = 20;
 const Teams: React.FC = () => {
     const [teams, setTeams] = React.useState<Team[]>(Array.from({ length: MAXTEAMS }, () => ({ name: '', baseTime: 0, state: 'ready', timeLeft: 0 })));
@@ -150,7 +151,7 @@ const Teams: React.FC = () => {
                     const t = configureAndSetTeams();
                     const baseTime = t[0]?.baseTime || 0;
                     console.log('Creating session with with token:', token);
-                    fetch('http://localhost:4500/api/newsession', {
+                    fetch(BASE_URL + '/api/newsession', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

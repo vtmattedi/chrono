@@ -4,7 +4,7 @@ import React from 'react';
 import { RotateCcw } from 'lucide-react';
 import { useGlobals } from '@/Providers/Globals';
 import { useAlert } from '@/Providers/Alerts';
-
+import { BASE_URL } from '@/Providers/Urls.tsx';
 const Admin: React.FC = () => {
     const [users, setUsers] = React.useState<any>([]);
     const [sessions, setSessions] = React.useState<any>([]);
@@ -30,8 +30,8 @@ const Admin: React.FC = () => {
     const fetchData = async () => {
         // setLoading(true);
         Promise.all([
-            fetch('http://localhost:4500/api/listusers').then(res => res.json()),
-            fetch('http://localhost:4500/api/listsessions').then(res => res.json())
+            fetch(BASE_URL + '/api/listusers').then(res => res.json()),
+            fetch(BASE_URL + '/api/listsessions').then(res => res.json())
         ]).then(([usersData, sessionsData]) => {
             console.log('Fetched users and sessions:', usersData.users, sessionsData.sessions);
             setUsers(usersData.users);
@@ -100,7 +100,7 @@ const Admin: React.FC = () => {
                 </Card>
                 <div className='flex justify-center '>
                     <Button className='w-40' onClick={() => {
-                        fetch('http://localhost:4500/api/newsession', {
+                        fetch(BASE_URL + '/api/newsession', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',

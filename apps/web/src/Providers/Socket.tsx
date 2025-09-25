@@ -3,8 +3,9 @@ import React, { createContext, useContext, useState, type ReactNode } from 'reac
 import { useGlobals } from './Globals';
 import { useAlert } from '../Providers/Alerts';
 import { useTimer } from './Timer';
+import { BASE_URL } from '@/Providers/Urls.tsx';
 // "undefined" means the URL will be computed from the `window.location` object
-const URL = process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:4500';
+const URL = process.env.NODE_ENV === 'production' ? undefined : BASE_URL + '';
 
 type SocketState = {
     joinSession: (sessionId: string, onFailed: (error: string) => void) => boolean;

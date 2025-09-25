@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, type ReactNode } from 'react';
 import { useAlert } from '@/Providers/Alerts.tsx';
-
+import { BASE_URL } from '@/Providers/Urls.tsx';
 type GlobalState = {
     theme: 'light' | 'dark';
     setDarkMode: (darkMode: boolean) => void;
@@ -50,7 +50,7 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
     }
     const requestNewToken = async (alias: string) => {
         console.log('Requesting new token for alias:', alias);
-        fetch('http://localhost:4500/api/token',{
+        fetch(BASE_URL + '/api/token',{
             headers: { 'Content-Type': 'application/json' },
             method: 'POST',
             body: JSON.stringify({ alias: alias }),
