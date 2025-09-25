@@ -45,7 +45,7 @@ class Server extends BasicServer {
     super();
     this.middleware();
     this.withCookies();
-    this.withcors('http://localhost:5173');
+    this.withcors('https://mwchrono.vercel.app');
     this.router(allRouter); /*Router for Apis + Auth*/
 
     /*Serves the React Page*/
