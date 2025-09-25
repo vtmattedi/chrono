@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import { chronoHandler } from "../..//chrono";
 import { userHandler } from "../../users";
 import { chronoController } from "../Controllers/chronoController";
+import { exec } from "child_process";
 /* 'All in one' Router, may need to be splitted when scaling*/
 const allRouter: Router = Router()
 
@@ -41,7 +42,6 @@ allRouter.get("/api/listusers", (req, res) => {
 allRouter.get("/webhook/frontend", (req, res) => {
     res.status(200).send("Received");
     console.log("Pulling new code from GitHub")
-    const { exec } = require('child_process');
     exec('node run.js', (error: any, stdout: any, stderr: any) => {
         if (error) {
             console.error(`Error executing script: ${error}`);
