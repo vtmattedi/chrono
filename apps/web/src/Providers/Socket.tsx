@@ -36,7 +36,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     const [state, setState] = useState<boolean>(false);
     const { token } = useGlobals();
     const { useToast } = useAlert();
-    const { updateTeamsState, setTeamsFromConfig, teams } = useTimer();
+    const { updateTeamsState, setTeamsFromConfig, teams, applyAction } = useTimer();
     const [sessionId, _setSessionId] = useState<string>('');
     const [userCount, setUserCount] = useState<number>(0);
     const [stage, setStage] = useState<number>(0);
@@ -62,6 +62,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
     const sendAction = (action: string, index: number[]) => {
         sendData({ type: 'action', message: { sessionId, action: { type: action, index } } });
+        applyAction(action, index);
     }
 
     const AlertAction = (type: string, indexi: number[]) => {

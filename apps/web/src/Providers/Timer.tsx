@@ -54,6 +54,7 @@ type TimerContextType = {
     unpauseChrono: (index: number[]) => void;
     finishChrono: (index: number[]) => void;
     rearmChrono: (index: number[]) => void;
+    applyAction: (action: string, index: number[]) => void;
     addTime: (index: number[], seconds: number) => void;
     setSpeed: (index: number[], speed: SpeedType) => void;
     updateTeamsState: (teamsStates: TeamUpdate[]) => void;
@@ -137,7 +138,6 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
                 t[i].state = 'finished';
                 t[i].finishTime = new Date();
             }
-            useToast('success', `Team ${t[i].name} has finished!`);
         }
         _setTeams([...t]);
     }
@@ -181,7 +181,22 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
         }
         _setTeams([...t]);
     }
-
+    const applyAction = (action: string, index: number[]) => {
+        if (action === 'start') startChrono(index);
+        else if (action === 'pause') pauseChrono(index);
+        else if (action === 'unpause') unpauseChrono(index);
+        else if (action === 'finish') finishChrono(index);
+        else if (action === 'rearm') rearmChrono(index);
+        else if (action.startsWith('add:')) {
+            const seconds = parseInt(action.split(':')[1]);
+            if (!seconds) return;
+            addTime(index, seconds);
+        }
+        else if (action.startsWith('speed:')) {
+            const speed = parseFloat(action.split(':')[1]);
+            setSpeed(index, speed as SpeedType);
+        }
+    }
     const startTicker = () => {
         setTickerState(true);
     }
@@ -269,7 +284,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
         return () => clearInterval(ticker.current!);
     }, [teams, tickerState]);
     return (
-        <TimerContext.Provider value={{ updateTeamsState, teams, rearmChrono, setTeams, startChrono, pauseChrono, finishChrono, addTime, unpauseChrono, setSpeed, startTicker, stopTicker, setTeamsFromConfig }}>
+        <TimerContext.Provider value={{ updateTeamsState, teams, rearmChrono, setTeams, startChrono, pauseChrono, finishChrono, addTime, unpauseChrono, setSpeed, startTicker, stopTicker, setTeamsFromConfig, applyAction }}>
             {children}
         </TimerContext.Provider>
     );
