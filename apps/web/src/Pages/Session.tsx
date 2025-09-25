@@ -61,7 +61,7 @@ const ChronoSession: React.FC = () => {
                         </div>
                     </div>
                     <div
-                        className='flex flex-col items-start text-sm'
+                        className='flex flex-col items-start text-sm justify-end'
                         style={{
                             color: state ? 'green' : 'red',
                         }}
@@ -69,7 +69,7 @@ const ChronoSession: React.FC = () => {
                             className={state ? 'animate-pulse' : ''}
                             fill={state ? 'green' : 'red'}
                         />
-                            {(latency || 0 ).toFixed(0)}ms
+                           {stage === 2 && (latency || 0).toFixed(0)}ms
                         </div>
 
                 </div>

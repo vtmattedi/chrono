@@ -96,7 +96,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         const { type, message } = JSON.parse(data);
         console.log('Message from server:', data, type);
         if (type === 'error') {
-            useToast('error', 'Error from server: ' + message);
+            useToast('error', message);
         }
         else if (type === 'info') {
             useToast('info', message);
@@ -147,7 +147,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
                 pingRef.current = performance.now();
                 socket.current.emit('ping');
             }
-        }, 5000);
+        }, 1000);
     }
     const cleanLatency = () => {
         if (pingIntervalRef.current) {
