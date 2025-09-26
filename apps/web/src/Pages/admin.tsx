@@ -19,6 +19,7 @@ const Admin: React.FC = () => {
     const { token, alias } = useGlobals();
     const { useToast } = useAlert();
     const [colors, setColors] = React.useState<string[]>([]);
+    const [adminPwd, setAdminPwd] = React.useState<string>('');
     React.useEffect(() => {
         const availableColors = ['#FF6633', '#FFB399', '#FF33FF', '#FFFF99', '#00B3E6',
             '#E6B333', '#3366E6', '#999966', '#99FF99', '#B34D4D',
@@ -75,7 +76,10 @@ const Admin: React.FC = () => {
                 <div className='w-full flex gap-2 text-wrap'>
                     <strong className='w-20'>Alias:</strong> {alias}
                 </div>
-
+                <input type="password" placeholder='Admin Password' className='w-full mt-2 p-2 border rounded'
+                    value={adminPwd}
+                    onChange={(e) => setAdminPwd(e.target.value)}
+                    />
                 <Card >
                     <div className='flex flex-row items-center justify-between w-full px-4 mt-4'>
                         <h2 className='font-audiowide text-xl'>Users</h2>
@@ -168,6 +172,7 @@ const Admin: React.FC = () => {
                                                     method: 'POST',
                                                     headers: {
                                                         'Authorization': 'Bearer ' + token,
+                                                        'x-adm-passwd': adminPwd,
                                                         'Content-Type': 'application/json'
                                                     },
                                                     body: JSON.stringify({
