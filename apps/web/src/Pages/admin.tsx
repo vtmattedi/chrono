@@ -133,6 +133,7 @@ const Admin: React.FC = () => {
                                 <th className='text-left p-2'>ID</th>
                                 <th className='text-left p-2'>Owner</th>
                                 <th className='text-left p-2'>Listeners</th>
+                                <th className='text-left p-2'>hijack</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -150,17 +151,41 @@ const Admin: React.FC = () => {
                                             style={{ color: color }}
                                         >{session.owner}</td>
                                         <td className='p-2 flex flex-row gap-1 flex-wrap'>
-                                            { Array.isArray(session.listeners) ? (
+                                            {Array.isArray(session.listeners) ? (
                                                 <>
                                                     ({session.listeners.length})
                                                     {session.listeners.map((listener: any, index: number) => {
-                                                        return <div key={listener} style={{ color: colors[users.findIndex((u: any) => u.userId === listener)] }}>{listener}{index===session.listeners.length-1?'':','}</div>
+                                                        return <div key={listener} style={{ color: colors[users.findIndex((u: any) => u.userId === listener)] }}>{listener}{index === session.listeners.length - 1 ? '' : ','}</div>
                                                     })}
                                                 </>
                                             ) : (
                                                 <div>{session.listeners}</div>
                                             )}
                                         </td>
+                                        <td className='p-2'><Button
+                                            onClick={() => {
+                                                fetch(BASE_URL + '/api/setowner', {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Authorization': 'Bearer ' + token,
+                                                        'Content-Type': 'application/json'
+                                                    },
+                                                    body: JSON.stringify({
+                                                        sessionId: session.sessionId
+                                                    }),
+                                                }).then(res => {
+                                                    if (res.ok) {
+                                                        useToast('success', 'Successfully hijacked session');
+                                                    } else {
+                                                        useToast('error', 'Failed to hijack session');
+                                                    }
+                                                }).catch(err => {
+                                                    useToast('error', 'Error hijacking session: ' + err.message);
+                                                });
+                                            }}
+                                        >
+                                            Take Ownership
+                                        </Button></td>
                                     </tr>
                                 );
                             })}

@@ -15,6 +15,7 @@ interface Alert {
     message: ReactNode;
     title: ReactNode;
     onResult?: (result: boolean) => void;
+    buttons?: 'ok' | 'confirm-cancel' | 'yes-no' ;
 
 }
 
@@ -22,7 +23,7 @@ type ToastTypes = 'success' | 'error' | 'info' | 'warning';
 
 interface AlertContextProps {
     alert: Alert | null;
-    showAlert: (message: ReactNode, title: ReactNode, onResult?: (result: boolean) => void) => void;
+    showAlert: (message: ReactNode, title: ReactNode, onResult?: (result: boolean) => void, buttons?: Alert['buttons']) => void;
     clearAlert: () => void;
     useToast: (type: ToastTypes, message: string) => void;
 }
@@ -40,8 +41,8 @@ export const useAlert = () => {
 export const AlertProvider = ({ children }: { children: ReactNode }) => {
     const [alert, setAlert] = useState<Alert | null>(null);
     const [alertVisible, setAlertVisible] = useState<boolean>(false);
-    const showAlert = (title: ReactNode, message: ReactNode, onResult?: (result: boolean) => void) => {
-        setAlert({ message, title, onResult });
+    const showAlert = (title: ReactNode, message: ReactNode, onResult?: (result: boolean) => void, buttons?: Alert['buttons']) => {
+        setAlert({ message, title, onResult, buttons });
         setAlertVisible(true);
     };
 
@@ -82,15 +83,39 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel className={'bg-red-500 dark:bg-[#8D0000] text-white'} onClick={() => {
-                            if (alert?.onResult) {
-                                alert?.onResult?.(false);
-                            }
-                            setAlertVisible(false);
-                        }}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => {
-                            alert?.onResult?.(true);
-                        }} >Confirm</AlertDialogAction>
+                        {
+                            alert?.buttons === 'ok' ? (
+                                <AlertDialogAction onClick={() => {
+                                    alert?.onResult?.(true);
+                                    setAlertVisible(false);
+                                }}>OK</AlertDialogAction>
+                            ) : alert?.buttons === 'yes-no' ? (
+                                <>
+                                    <AlertDialogCancel className={'bg-red-500 dark:bg-[#8D0000] text-white'} onClick={() => {
+                                        if (alert?.onResult) {
+                                            alert?.onResult?.(false);
+                                        }
+                                        setAlertVisible(false);
+                                    }}>No</AlertDialogCancel>  
+                                    <AlertDialogAction onClick={() => {
+                                        alert?.onResult?.(true);
+                                        setAlertVisible(false);
+                                    }}>Yes</AlertDialogAction>
+                                </>
+                            ) : (
+                                <>
+                                    <AlertDialogCancel onClick={() => {
+                                        if (alert?.onResult) {
+                                            alert?.onResult?.(false);
+                                        }
+                                        setAlertVisible(false);
+                                    }} className='bg-red-500 dark:bg-[#8D0000] text-white'>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => {
+                                        alert?.onResult?.(true);
+                                    }} >Confirm</AlertDialogAction>
+                                </>
+                            )
+                        }
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

@@ -6,7 +6,7 @@ import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router-dom";
 import { GlobalProvider } from './Providers/Globals.tsx';
 import { AlertProvider } from './Providers/Alerts.tsx';
-import Teams from './Pages/Teams.tsx';
+import CreateChrono from './Pages/Create.tsx';
 import { Toaster } from "@/components/ui/sonner"
 import Chrono from './Pages/Chrono.tsx';
 import Layout from './Layout.tsx';
@@ -21,8 +21,8 @@ const router = createBrowserRouter([
     element: <Layout><Home /></Layout>,
   },
   {
-    path: "/teams",
-    element: <Layout><Teams /></Layout>,
+    path: "/createchrono",
+    element: <Layout><CreateChrono /></Layout>,
   },
   {
     path: "/chrono",

@@ -10,6 +10,7 @@ import {
     SheetDescription,
     SheetFooter,
     SheetHeader,
+    SheetTitle,
 } from "@/components/ui/sheet"
 import { useNavigate } from 'react-router-dom';
 const Header: React.FC = () => {
@@ -42,7 +43,6 @@ const Header: React.FC = () => {
     const Navigate = useNavigate();
     const [menuOpen, setMenuOpen] = React.useState(false);
     const desc = ['click me', '/vtmattedi', '/vitor-mattedi-dev'];
-    const { token, alias } = useGlobals();
     const images = () => {
         return [
             <img
@@ -113,6 +113,7 @@ const Header: React.FC = () => {
                     }}
                 >
                     <SheetHeader>
+                        <SheetTitle className='text-2xl font-audiowide flex items-center gap-2'>Settings</SheetTitle>
                         <SheetDescription>
                             <div className='flex mb-6  gap-4 px-2 items-center font-audiowide text-2xl  justify-between text-black dark:text-white'>
                                 <span>Theme:</span>
@@ -130,12 +131,7 @@ const Header: React.FC = () => {
                         </SheetDescription>
                         <SheetFooter>
                             Designed by Mattediworks &copy;
-                            <div>
-                                token: {token}
-                            </div>
-                            <div>
-                                alias: {alias}
-                            </div>
+
                         </SheetFooter>
                     </SheetHeader>
                 </SheetContent>

@@ -9,6 +9,7 @@ type GlobalState = {
     setToken: (token: string | null) => void;
     alias: string | null;
     setAlias: (alias: string | null) => void;
+    invalidateToken: () => void;
 };
 
 const GlobalContext = createContext<GlobalState | undefined>(undefined);
@@ -25,12 +26,15 @@ type GlobalProviderProps = {
     children: ReactNode;
 };
 
+const MAX_WIDTH_PX = 768;
+
 export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
-    const [onMobile, setOnMobile] = useState<boolean>(window.innerWidth < 768);
+    const [onMobile, setOnMobile] = useState<boolean>(window.innerWidth < MAX_WIDTH_PX);
     const [alias, _setAlias] = useState<string | null>('webclient');
     const [token, setToken] = useState<string | null>(null);
     const { useToast } = useAlert();
+    
     const setDarkMode = (enabled: boolean) => {
         if (enabled) {
             document.documentElement.classList.add('dark');
@@ -84,6 +88,11 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
         });
 
     }
+    const invalidateToken = () => {
+        setToken(null);
+        localStorage.removeItem('token');
+        requestNewToken(alias || 'webclient');
+    }
     React.useEffect(() => {
         console.log('Token changed:', token);
         useToast('info', token ? 'Token set' : 'No token available');
@@ -111,7 +120,7 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
         }
         // add event listener to track window resize and set onMobile accordingly
         const handleResize = () => {
-            setOnMobile(window.innerWidth < 1200);// 1200px breakpoint for the filter bar
+            setOnMobile(window.innerWidth < MAX_WIDTH_PX);
         };
         window.addEventListener('resize', handleResize);
         handleResize(); // Initial check
@@ -132,8 +141,9 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
             window.removeEventListener('resize', handleResize);
         };
     }, []);
+    
     return (
-        <GlobalContext.Provider value={{ theme, setDarkMode, onMobile, token, alias, setAlias, setToken }}>
+        <GlobalContext.Provider value={{ theme, setDarkMode, onMobile, token, alias, setAlias, setToken, invalidateToken }}>
             {children}
         </GlobalContext.Provider>
     );

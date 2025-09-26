@@ -162,7 +162,12 @@ button {
 [data-slot="card"]{
   @apply bg-gray-300 dark:bg-card;
 }
-
+[data-slot="switch-thumb"][data-state="checked"]{
+  @apply  bg-white;
+}
+[data-slot="switch-thumb"]{
+  @apply bg-blue-500 dark:bg-white;
+}
 .font-quantico {
   font-family: "Quantico", sans-serif;
   font-weight: 700;

@@ -50,18 +50,19 @@ export type TeamConfig = {
 type TimerContextType = {
     teams: Team[];
     setTeams: (newTeams: Team[], store?: boolean) => void;
-    startChrono: (index: number[]) => void;
-    pauseChrono: (index: number[]) => void;
-    unpauseChrono: (index: number[]) => void;
-    finishChrono: (index: number[]) => void;
-    rearmChrono: (index: number[]) => void;
+    // startChrono: (index: number[]) => void;
+    // pauseChrono: (index: number[]) => void;
+    // unpauseChrono: (index: number[]) => void;
+    // finishChrono: (index: number[]) => void;
+    // rearmChrono: (index: number[]) => void;
+    // setSpeed: (index: number[], speed: SpeedType) => void;
     applyAction: (action: string, index: number[]) => void;
     addTime: (index: number[], seconds: number) => void;
-    setSpeed: (index: number[], speed: SpeedType) => void;
     updateTeamsState: (teamsStates: TeamUpdate[]) => void;
     startTicker: () => void;
     stopTicker: () => void;
     setTeamsFromConfig: (config: TeamConfig) => void;
+    exportCSV: () => void;
 };
 
 const TimerContext = createContext<TimerContextType | undefined>(undefined);
@@ -73,6 +74,42 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     const ticker = React.useRef<NodeJS.Timeout | null>(null);
     const teamRefs = React.useRef<Team[]>([]);
     const { useToast } = useAlert();
+
+    const exportCSV = () => {
+        const secToString = (seconds: number) => {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = Math.round(seconds % 60);
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        const csvContent = "data:text/csv;charset=utf-8," +
+            ['Team Name,State,Base Time,Time Left,Time Running,Time Paused,Total Time,Drift(ms),Time Added,Time Subtracted,Speed']
+                .concat(teams.map(team => {
+                    return [
+                        `"${team.name.replace(/"/g, '""')}"`,
+                        team.state, // current state
+                        secToString(team.baseTime), // base time
+                        secToString(team.timeLeft),// time left
+                        secToString(team.timeRunning || 0), // time running
+                        secToString(team.timePaused || 0),// time paused
+                        secToString(((team.timeRunning || 0) + (team.timePaused || 0))), // total time
+                        (team.finalDrift || 0).toFixed(0), // in ms, positive or negative
+                        secToString((team.timeAdded || 0)), // time added
+                        secToString((team.timeSubtracted || 0)), // time subtracted
+                        team.speed || 1
+                    ].join(',');
+                })).join('\n');
+        const checkSum = Array.from(csvContent.slice(28)).reduce((a, b) => a + b.charCodeAt(0), 0) % 1997;
+        const csvContentWithChecksum = csvContent + `\nchecksum:${checkSum}`;
+        const encodedUri = encodeURI(csvContentWithChecksum);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `mw_chrono_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
     const _setTeams = (newTeams: Team[]) => {
         __setTeams(newTeams);
         teamRefs.current = newTeams;
@@ -308,7 +345,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
         return () => clearInterval(ticker.current!);
     }, [teams, tickerState]);
     return (
-        <TimerContext.Provider value={{ updateTeamsState, teams, rearmChrono, setTeams, startChrono, pauseChrono, finishChrono, addTime, unpauseChrono, setSpeed, startTicker, stopTicker, setTeamsFromConfig, applyAction }}>
+        <TimerContext.Provider value={{ updateTeamsState, teams, exportCSV, setTeams,  addTime, startTicker, stopTicker, setTeamsFromConfig, applyAction }}>
             {children}
         </TimerContext.Provider>
     );

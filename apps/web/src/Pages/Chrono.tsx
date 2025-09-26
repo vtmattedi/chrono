@@ -1,16 +1,17 @@
 import React, { useEffect } from 'react';
-import { useTimer, type SpeedType, type Team } from '../Providers/Timer.tsx';
+import { useTimer, type Team } from '../Providers/Timer.tsx';
 import { Card } from '@/components/ui/card.tsx';
 import { Button } from '@/components/ui/button.tsx';
-import {  RotateCcw, Settings, PlusCircle, Download } from 'lucide-react';
+import { RotateCcw, Settings, PlusCircle, Download } from 'lucide-react';
 
 
 import { useNavigate } from 'react-router';
 import { useAlert } from '@/Providers/Alerts.tsx';
 import TeamCards from '@/components/TeamCards.tsx';
+import { AllButtons } from '@/components/btns.tsx';
 
 const Chrono: React.FC = () => {
-    const { teams, startChrono, pauseChrono, finishChrono, addTime, rearmChrono, setTeams, setSpeed } = useTimer();
+    const { teams, setTeams, exportCSV, applyAction } = useTimer();
 
     const { showAlert, useToast } = useAlert();
     const navigate = useNavigate();
@@ -35,21 +36,23 @@ const Chrono: React.FC = () => {
                 const _teams = t.slice(0, config.numberOfTeams)
                 console.log('Setting teams from saved config:', _teams, t, config.numberOfTeams);
                 setTeams(_teams);
-                
+
                 // setValues(_teams.map(() => "05:00"));
             }
         }
         const params = new URLSearchParams(window.location.search);
         startTicker();
         if (params.get('start') === 'true') {
-            startChrono(teams.map((_, i) => i));
+            action('start', teams.map((_, i) => i));
         }
 
         return () => {
             stopTicker();
         }
     }, []);
-   
+    const action = (act: string, index: number[]) => {
+        applyAction(act, index);
+    }
     return (
         <div className='h-full flex flex-col items-center justify-start  w-screen p-4 font-inter'>
             <Card className='items-center gap-1 p-2'>
@@ -69,66 +72,34 @@ const Chrono: React.FC = () => {
                             );
                         }} className='mb-1'><PlusCircle /> New Teams</Button>
                         <Button variant="outline" size="sm" onClick={() => {
-                            const csvContent = "data:text/csv;charset=utf-8," +
-                                ['Team Name,State,Base Time,Time Left,Time Running,Time Paused,Total Time,Time Added,Time Subtracted,Speed']
-                                    .concat(teams.map(team => {
-                                        return [
-                                            `"${team.name.replace(/"/g, '""')}"`,
-                                            team.state,
-                                            new Date(team.baseTime * 1000).toISOString().slice(11, 19),
-                                            new Date(team.timeLeft * 1000).toISOString().slice(11, 19),
-                                            new Date((team.timeRunning || 0) * 1000).toISOString().slice(11, 19),
-                                            new Date((team.timePaused || 0) * 1000).toISOString().slice(11, 19),
-                                            new Date(((team.timeRunning || 0) + (team.timePaused || 0)) * 1000).toISOString().slice(11, 19),
-                                            new Date((team.timeAdded || 0) * 1000).toISOString().slice(11, 19),
-                                            new Date((team.timeSubtracted || 0) * 1000).toISOString().slice(11, 19),
-                                            team.speed || 1
-                                        ].join(',');
-                                    })).join('\n');
-                            const encodedUri = encodeURI(csvContent);
-                            const link = document.createElement("a");
-                            link.setAttribute("href", encodedUri);
-                            link.setAttribute("download", `mw_chrono_${new Date().toISOString().slice(0, 10)}.csv`);
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
+                            exportCSV();
                         }}>
                             <Download /> Export csv
                         </Button>
                     </div>
                 </div>
-                <div className=' flex flex-row'>
-                    <Button onClick={() => startChrono(teams.map((_, i) => i))} className='m-2 p-2 bg-green-500 text-white rounded'>Start All</Button>
-                    <Button onClick={() => pauseChrono(teams.map((_, i) => i))} className='m-2 p-2 bg-yellow-500 text-white rounded'>Pause All</Button>
-                    <Button onClick={() => finishChrono(teams.map((_, i) => i))} className='m-2 p-2 bg-red-500 text-white rounded'>Finish All</Button>
-                    <Button onClick={() => {
-                        showAlert(
-                            <div className='flex items-center gap-2'><RotateCcw color='#00458D' /><span> Reset all timers?</span></div>,
-                            <span>This action cannot be undone. All timers will be reset to their initial values.</span>,
-                            (result: boolean) => {
-                                if (result) {
-                                    rearmChrono(teams.map((_, i) => i));
+                    <AllButtons onAction={(name) => {
+                        if (name === 'rearm') {
+                            showAlert(
+                                <div className='flex items-center gap-2'><RotateCcw color='#00458D' /><span> Reset all timers?</span></div>,
+                                <span>This action cannot be undone. All timers will be reset to their initial values.</span>,
+                                (result: boolean) => {
+                                    if (result) {
+                                        action(name, teams.map((_, i) => i))
+                                    }
                                 }
-                            }
-                        );
-                    }} className='m-2 p-2 bg-blue-500 text-white rounded'><RotateCcw /> Restart All</Button>
-                </div>
+                            );
+                            return;
+                        }
+                        action(name, teams.map((_, i) => i))
+                    }} states={[...teams.map((team) => team.state)]}
+                        className=' flex flex-row gap-2 flex-wrap justify-center mt-1'
+                    />
+
             </Card>
             <div className='flex flex-row flex-wrap justify-center'>
-                <TeamCards onAction={(action, index) => {
-                    if (action === 'start') startChrono(index);
-                    else if (action === 'pause') pauseChrono(index);
-                    else if (action === 'finish') finishChrono(index);
-                    else if (action === 'rearm') rearmChrono(index);
-                    else if (action.startsWith('add:')) {
-                        const seconds = parseInt(action.split(':')[1]);
-                        if (!seconds) return;
-                        addTime(index, seconds);
-                    }
-                    else if (action.startsWith('speed:')) {
-                        const speed = parseFloat(action.split(':')[1]);
-                        setSpeed(index, speed as SpeedType);
-                    }
+                <TeamCards onAction={(name, index) => {
+                    action(name, index);
                 }} />
             </div>
         </div>

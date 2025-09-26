@@ -49,7 +49,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         autoConnect: false,
     }));
 
-    const  setSessionId = (id: string) => {
+    const setSessionId = (id: string) => {
         _setSessionId(id);
         sessionIdRef.current = id;
     }
@@ -103,7 +103,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
     const handleMessage = (data: any, onFailed: (message: string) => void) => {
         const { type, message } = JSON.parse(data);
-        console.log('Message from server:', data, type);
         if (type === 'error') {
             useToast('error', message);
         }
@@ -114,7 +113,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             console.log(message, message.success);
             setStage(4);
             if (message.success) {
-                useToast('success', 'Successfully joined session');
+                useToast('success', 'Connected to session: ' + sessionIdRef.current);
                 const userCount = parseInt(message.userCount);
                 setAdminRole(message.role === 'admin');
                 setUserCount(userCount);
@@ -128,7 +127,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
                 }
             }
             else {
-                onFailed(message.errorMessage);
+                onFailed("session doesn't exist.");
+                setStage(-2);
             }
 
         }
@@ -152,6 +152,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             setStage(3);
             sendData({ type: 'join', message: sessionIdRef.current });
         }
+     
     }
 
     const startPing = () => {
@@ -180,6 +181,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         setStage(1);
         socket.current = io(BASE_URL, {
             autoConnect: false,
+            reconnectionAttempts: 3,
         });
         socket.current.connect();
         setSessionId(_sessionId)
@@ -188,7 +190,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             setState(true);
             console.log('Connected to server with token:', token);
             sendData({ type: 'identify', message: token });
-            useToast('success', 'Connected to session ' + _sessionId);
             setStage(2);
         });
         socket.current.on('message', (data) => {
@@ -196,7 +197,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         });
         socket.current.on('disconnect', () => {
             setState(false);
-            useToast('error', 'Disconnected from server');
+            useToast('error', 'Disconnected from session ' + sessionId);
             setSessionId('');
             setStage(0);
             if (pingIntervalRef.current) {
@@ -209,6 +210,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         });
         socket.current.on('connect_error', (err) => {
             setState(false);
+            setStage(-1);
             useToast('error', 'Connection error: ' + err.message);
             console.error('Connection error:', err);
         });
@@ -240,6 +242,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             const pingTime = pingRef.current || 0;
             setLatency(pongTime - pingTime);
             startPing();
+        });
+
+        socket.current.on('session-ended',() => {
+            setStage(-3);
+            useToast('error', 'Session ' + sessionIdRef.current + ' has ended.');
         });
 
         startPing();
