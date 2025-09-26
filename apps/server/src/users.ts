@@ -19,20 +19,20 @@ class UserHandler {
     public addSocket(userId: string, socketId: string, ip: string | null = null) {
         const user = UserHandler.users.get(userId);
         if (!user) {
-            console.log("User ID not found, creating new user with ID:", userId);
+            // console.log("User ID not found, creating new user with ID:", userId);
             const newuser: User = this.createUser(ip || 'unknown', 'anonymous');
             newuser.socketId.push(socketId);
             UserHandler.users.set(userId, newuser);
-            console.log("Created new user:", newuser);
+            // console.log("Created new user:", newuser);
             UserHandler.usersBySocket.set(socketId, userId);
-            console.log("Added socket:", socketId, "to user:", userId);
+            // console.log("Added socket:", socketId, "to user:", userId);
             return;
         }
         if (!user?.socketId.includes(socketId)) {
             user?.socketId.push(socketId);
         }
         UserHandler.usersBySocket.set(socketId, userId);
-        console.log("Added socket:", socketId, "to user:", userId);
+        // console.log("Added socket:", socketId, "to user:", userId);
     }
 
     public issueNewUserId(): string {

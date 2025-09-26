@@ -19,8 +19,8 @@ class ChronoController {
     public startSession = (req: Request, res: Response): void => {
         const token = req.headers['authorization']?.split(' ')[1];
         const { teams, initialTime, start } = req.body;
-        console.log("Starting session with token:", req.body);
-        console.log("Starting session with teams:", teams, "initialTime:", initialTime, "start:", start);
+        // console.log("Starting session with token:", req.body);
+        // console.log("Starting session with teams:", teams, "initialTime:", initialTime, "start:", start);
         if (!token) {
             res.status(401).json({ message: 'No token provided' });
             return;

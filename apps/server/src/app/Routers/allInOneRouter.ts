@@ -22,7 +22,7 @@ allRouter.post("/api/token", (req, res) => {
         alias: alias || 'anonymous',
         userId: user.userId
     }, process.env.JWT_SECRET as string);
-    console.log("Issued token for userId:", user.userId, "alias:", user.alias);
+    // console.log("Issued token for userId:", user.userId, "alias:", user.alias);
     res.status(200).json({ token });
 });
 

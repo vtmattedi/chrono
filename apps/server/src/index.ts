@@ -82,12 +82,12 @@ app.io.on("connection", (socket) => {
         }
         else if (data.type === "join") {
             const sessionId = data.message;
-            console.log(data,data.message);
+            // console.log(data,data.message);
             const userId = userHandler.getUserId(socket.id);
             const result = chronoHandler.addListener(sessionId, userId);
             const adminRole = chronoHandler['chronos'].get(sessionId)?.isAuthorized(userId);
             const response = { type: "join_result", message: { success: false, errorMessage: "", userCount: result, role: adminRole ? "admin" : "user", config: "", state: "" } };
-            console.log(`User`, userId, `joining session`, sessionId, `from`, socket.id, `result:`, result, `role:`, response.message.role);
+            // console.log(`User`, userId, `joining session`, sessionId, `from`, socket.id, `result:`, result, `role:`, response.message.role);
             if (result > 0) {
                 const teamsConfig = chronoHandler['chronos'].get(sessionId)?.TeamsConfig() || "{}";
                 response.message.config = teamsConfig;
