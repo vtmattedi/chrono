@@ -133,6 +133,7 @@ class ChronoController {
 
     public setOwner = (req: Request, res: Response): void => {
         const token = req.headers['authorization']?.split(' ')[1];
+        const admpwd = req.headers['x-adm-passwd'] as string || '';
         if (!token) {
             res.status(401).json({ message: 'No token provided' });
             return;
@@ -140,6 +141,10 @@ class ChronoController {
         const { sessionId } = req.body;
         if (!sessionId) {
             res.status(400).json({ message: 'No sessionId provided' });
+            return;
+        }
+        if (admpwd !== process.env.ADM_PASSWD) {
+            res.status(403).json({ message: 'Not authorized' });
             return;
         }
 
