@@ -241,7 +241,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
                         if (key === 'finishTime' || key === 'startTime') {
                             (t[i] as any)[key] = new Date(teamsStates[i][key] as string);
                         }
-                        else if (key === 'state' || key === 'speed') {
+                        else if (key === 'state' || key === 'speed' || key === 'timeLeft') {
                             if (t[i].stateLocked) {
                                 continue;
                             }

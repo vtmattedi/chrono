@@ -45,12 +45,11 @@ const ChronoSession: React.FC = () => {
     // }, [teams]);
 
 
-    const msToString = (ms: number) => {
-        const totalSeconds = Math.floor(ms / 1000);
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const secToString = (seconds: number) => {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
     React.useEffect(() => {
@@ -105,14 +104,14 @@ const ChronoSession: React.FC = () => {
                                     return [
                                         `"${team.name.replace(/"/g, '""')}"`,
                                         team.state, // current state
-                                        msToString(team.baseTime), // base time
-                                        msToString(team.timeLeft),// time left
-                                        msToString(team.timeRunning || 0), // time running
-                                        msToString(team.timePaused || 0),// time paused
-                                        msToString(((team.timeRunning || 0) + (team.timePaused || 0))), // total time
+                                        secToString(team.baseTime), // base time
+                                        secToString(team.timeLeft),// time left
+                                        secToString(team.timeRunning || 0), // time running
+                                        secToString(team.timePaused || 0),// time paused
+                                        secToString(((team.timeRunning || 0) + (team.timePaused || 0))), // total time
                                         (team.finalDrift || 0), // in ms, positive or negative
-                                        msToString((team.timeAdded || 0) ), // time added
-                                        msToString((team.timeSubtracted || 0)), // time subtracted
+                                        secToString((team.timeAdded || 0) ), // time added
+                                        secToString((team.timeSubtracted || 0)), // time subtracted
                                         team.speed || 1
                                     ].join(',');
                                 })).join('\n');
