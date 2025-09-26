@@ -4,7 +4,6 @@ import { useGlobals } from './Globals';
 import { useAlert } from '../Providers/Alerts';
 import { useTimer } from './Timer';
 import { BASE_URL } from '@/Providers/Urls.tsx';
-import { on } from 'events';
 // "undefined" means the URL will be computed from the `window.location` object
 
 type SocketState = {
@@ -163,7 +162,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             }
         }, 1000);
     }
-    
+
     const cleanLatency = () => {
         if (pingIntervalRef.current) {
             clearInterval(pingIntervalRef.current);
