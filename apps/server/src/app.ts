@@ -50,7 +50,8 @@ class Server extends BasicServer {
     this.router(allRouter); /*Router for Apis + Auth*/
 
     /*Serves the React Page*/
-    if (process.env.SERVER_ONLY === 'true') {
+    if (process.env.SERVER_ONLY === 'false') {
+      console.log("Serving frontend from folder:", process.env.FRONTEND_FOLDER ?? './front/dist');
       const frontendFolder = process.env.FRONTEND_FOLDER ?? './front/dist';
       this.server.use(express.static(path.resolve(frontendFolder)));
       this.server.use('*', (req, res) => {
@@ -58,6 +59,7 @@ class Server extends BasicServer {
       });
     }
     else {
+      console.log("Server only mode, not serving frontend");
       this.server.use('*', (req, res) => {
         res.redirect(301, corsOrigin);
       });
