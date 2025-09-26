@@ -49,6 +49,7 @@ chronoHandler.onChronoCreated = (chrono) => {
 chronoHandler.startAfkCheck((Number(process.env.AFK_CHECK_MINS) || 48 * 60)); // minutes
 
 app.io.on("connection", (socket) => {
+    console.log("New client connected:", socket.id, "from", socket.handshake.address);
     socket.on("disconnect", () => {
         const userId = userHandler.getUserId(socket.id);
         userHandler.removeSocket(socket.id);
