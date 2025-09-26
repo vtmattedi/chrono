@@ -61,6 +61,7 @@ class Chrono {
     public countedTicks: number = 0;
     public listeners: string[] = [];
     private updatesSent: number = 0;
+    private lastActivity: Date = new Date();
     public onUpdate = (data: any, full: boolean) => { };
     
     constructor(owner: string, teamNames: string[] = [], initialTime: number, start: boolean = false, isPublic: boolean = false) {
@@ -83,6 +84,7 @@ class Chrono {
     }
     
     private sendUpdates() {
+
         const full = this.updatesSent++ % 15 === 0; // every 15 ticks send full update
         this.onUpdate(this.getState(full), full);
     }
@@ -245,6 +247,7 @@ class Chrono {
 
     // Get current state of all teams
     public getState(full: boolean = false) {
+        this.lastActivity = new Date();
         const data: any[] = this.teams.map(team => {
             const _data: any =
             {
@@ -374,13 +377,13 @@ class ChronoHandler {
         this.afkInterval = setInterval(() => {
             const now = new Date();
             this.chronos.forEach((chrono, sessionId) => {
-                const diff = (now.getTime() - chrono['createdAt'].getTime()) / 1000 / 60; // in minutes
-                if (diff > 30 && chrono.listeners.length === 0) {
+                const diff = (now.getTime() - chrono['lastActivity'].getTime()) / 1000 / 60; // in minutes
+                if (diff > timeoutMinutes && chrono.listeners.length === 0) {
                     console.log(`Killing chrono ${sessionId} due to inactivity`);
                     this.killChrono(sessionId);
                 }
             });
-        }, timeoutMinutes * 60 * 1000);
+        }, 30 * 60 * 1000);
     }
     public stopAfkCheck() {
         if (this.afkInterval) {
