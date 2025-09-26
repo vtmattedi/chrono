@@ -29,7 +29,7 @@ allRouter.post("/api/token", (req, res) => {
 allRouter.post("/api/validatetoken", (req, res) => {
     
     const  token  = req.headers.authorization ? { token: req.headers['authorization'].split(' ')[1] } :  null ;
-    console.log("Validating token:", token);
+    console.log("Validating token");
     if (!token || !token) {
         res.status(400).json({ valid: false, message: 'No token provided' });
         return;
@@ -57,6 +57,9 @@ allRouter.post("/api/validatetoken", (req, res) => {
 
 allRouter.post("/api/newsession", chronoController.startSession);
 
+allRouter.post("/api/killsession", chronoController.killSession);
+allRouter.post("/api/setowner", chronoController.setOwner);
+allRouter.get("/api/mysessions", chronoController.getSessionsWithId);
 
 
 allRouter.get("/api/listsessions", (req, res) => {

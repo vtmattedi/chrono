@@ -1,7 +1,6 @@
 
-import { start } from 'repl';
+
 import { Team } from './Teams';
-import { time } from 'console';
 
 /**
  * Represents a multi-team timer/chronometer system with support for multiple teams, adjustable speeds, and state management.
@@ -57,15 +56,17 @@ class Chrono {
     public sessionId: string = '';
     private logData: string = '';
     private owner: string = '';
+    public createdBy: string = '';
     public avgTickTime: number = 0;
     public countedTicks: number = 0;
     public listeners: string[] = [];
     private updatesSent: number = 0;
     public onUpdate = (data: any, full: boolean) => { };
     
-    constructor(owner: string, teamNames: string[] = [], initialTime: number, start: boolean = false) {
-        this.owner = owner;
-        this.sessionId = Math.random().toString(36).slice(2, 12);
+    constructor(owner: string, teamNames: string[] = [], initialTime: number, start: boolean = false, isPublic: boolean = false) {
+        this.owner = isPublic ? 'all' : owner;
+        this.createdBy = owner;
+        this.sessionId = Math.random().toString(36).slice(6, 12);
         this.teams = teamNames.map(name => new Team(name, initialTime)); // default 5 minutes
         this.createdAt = new Date();
         this.startClock();
@@ -73,10 +74,12 @@ class Chrono {
             this.startAll();
         }
     }
-
+    public isCreatedBy(userId: string): boolean {
+        return this.createdBy === userId;
+    }
     // Check if a user is authorized (is the owner)
     public isAuthorized(userId: string): boolean {
-        return this.owner === userId;
+        return this.owner === userId || this.owner === 'all';
     }
     
     private sendUpdates() {
@@ -103,7 +106,7 @@ class Chrono {
         this.intervalId = setInterval(() => {
             const now = performance.now();
             const delta = Number(now - this.lastTick)
-            if (now - this.lastTick < 245) {
+            if (now - this.lastTick < 247) {
                 return; // not enough time passed
             }
             this.avgTickTime += delta;
@@ -276,8 +279,8 @@ class ChronoHandler {
     private afkInterval?: NodeJS.Timeout;
     public onChronoCreated = (chrono: Chrono) => { };
     public onChronoDeleted = (sessionId: string) => { };
-    public createChrono(ownerId: string, teams: string[], initialTime: number, start: boolean = false): Chrono {
-        const chrono = new Chrono(ownerId, teams, initialTime, start);
+    public createChrono(ownerId: string, teams: string[], initialTime: number, start: boolean = false, isPublic: boolean = false): Chrono {
+        const chrono = new Chrono(ownerId, teams, initialTime, start, isPublic);
         this.chronos.set(chrono.sessionId, chrono);
         this.onChronoCreated(chrono);
         return chrono;
@@ -302,7 +305,8 @@ class ChronoHandler {
                 sessionId: chrono.sessionId,
                 owner: chrono['owner'],
                 listeners: [...chrono.listeners],
-                createdAt: chrono['createdAt']
+                createdAt: chrono['createdAt'], 
+                createdBy: chrono.createdBy
             });
         });
         return res;
@@ -321,9 +325,10 @@ class ChronoHandler {
     }
 
     public killChrono(sessionId: string): boolean {
-        const chrono = this.chronos.get(sessionId);
+        let chrono = this.chronos.get(sessionId);
         if (!chrono) return false;
         this.chronos.delete(sessionId);
+        chrono.stopClock();
         this.onChronoDeleted(sessionId);
         return true;
     }

@@ -40,8 +40,13 @@ chronoHandler.onChronoCreated = (chrono) => {
             app.io.to(chrono.sessionId).emit('tick', data);
         }
     }
+    chronoHandler.onChronoDeleted = (sessionId) => {
+        console.log("Session", sessionId, "ended, notifying clients");
+        app.io.to(sessionId).emit('session-ended', { message: 'Session ended by owner' });
+        app.io.socketsLeave(sessionId); // remove all sockets from the room
+    }
 }
-chronoHandler.startAfkCheck((Number(process.env.AFK_CHECK_MINS) || 12 * 60)); // minutes
+chronoHandler.startAfkCheck((Number(process.env.AFK_CHECK_MINS) || 48 * 60)); // minutes
 
 app.io.on("connection", (socket) => {
     socket.on("disconnect", () => {
