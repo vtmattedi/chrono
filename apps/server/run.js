@@ -17,6 +17,7 @@ else {
     fs.mkdirSync(frontDir);
 }
 process.chdir(frontDir);
+console.log("Changed working directory to:", process.cwd());
 
 try {
 // Run git clone (replace with your repo URL)
@@ -24,7 +25,7 @@ const repoUrl = 'https://github.com/vtmattedi/chronoapp.git'; // <-- Change this
 execSync(`git clone ${repoUrl} .`, { stdio: 'inherit' });
 
 // Run npm install
-execSync('npm install', { stdio: 'inherit' });
+execSync('ls && npm install', { stdio: 'inherit' });
 
 // Run npm run build
 execSync('npm run build', { stdio: 'inherit' });
