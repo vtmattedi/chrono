@@ -1,4 +1,4 @@
-import React, { use } from 'react';
+import React from 'react';
 import { useTimer } from '../Providers/Timer.tsx';
 import { Card } from '@/components/ui/card.tsx';
 import { useNavigate, useLocation } from 'react-router';
@@ -44,7 +44,7 @@ const ChronoSession: React.FC = () => {
     // }, [teams]);
 
     React.useEffect(() => {
-        
+
     }, []);
     const stages = ['Connecting to server...', 'Verifying Identity...', 'Joining session...', 'In session'];
     return (
