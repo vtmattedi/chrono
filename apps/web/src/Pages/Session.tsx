@@ -1,5 +1,5 @@
-import React from 'react';
-import { useTimer} from '../Providers/Timer.tsx';
+import React, { use } from 'react';
+import { useTimer } from '../Providers/Timer.tsx';
 import { Card } from '@/components/ui/card.tsx';
 import { useNavigate, useLocation } from 'react-router';
 import { useSocket } from '@/Providers/Socket.tsx';
@@ -18,7 +18,8 @@ const ChronoSession: React.FC = () => {
     const [sessionId, setSessionId] = React.useState<string>('');
     const navigate = useNavigate();
     const location = useLocation();
-    const { joinSession, leaveSession, state, sendAction, userCount, adminRole, stage, latency } = useSocket();
+    // const stage = 0; // 1: joining, 2: joined, 3: loading teams, 4: in session
+    const { joinSession, leaveSession, state, sendAction,stage, userCount, adminRole, latency } = useSocket();
 
     React.useEffect(() => {
         // Joining the session from the URL
@@ -41,6 +42,11 @@ const ChronoSession: React.FC = () => {
     // useEffect(() => {
     //     console.log(teams)
     // }, [teams]);
+
+    React.useEffect(() => {
+        
+    }, []);
+    const stages = ['Connecting to server...', 'Verifying Identity...', 'Joining session...', 'In session'];
     return (
         <div className='h-full flex flex-col items-center justify-start  w-screen p-4 font-inter'>
             <Card className='w-full max-w-[41rem] p-4 '>
@@ -62,26 +68,29 @@ const ChronoSession: React.FC = () => {
                     </div>
                     <div
                         className='flex flex-col items-end text-sm '
-                        style={{
-                            color: state ? 'green' : 'red',
-                        }}
                     ><Squircle
                             className={state ? 'animate-pulse' : ''}
+                            color={state ? 'green' : 'red'}
                             fill={state ? 'green' : 'red'}
                         />
-                           {stage === 4 && (latency || 0).toFixed(0)}ms
-                        </div>
+                        {stage === 4 && <span>{(latency || 0).toFixed(0)}ms</span>}
+                    </div>
 
                 </div>
-                <div className='flex justify-between items-center'>
-                    <div className='flex items-center gap-2'>
-                        <div>{adminRole ? 'Admin' : 'Viewing'}</div>
-                        <div className='text-sm text-gray-500'><i> you are {adminRole ? '' : 'not'} allowed to control the chronos</i></div>
-                    </div>
-                    <div className='flex items-center gap-2  border rounded-[50%] w-8 h-8 justify-center border-green-500/50'>
-                        <div className='text-sm font-inter'>{userCount}</div>
-                    </div>
-                </div>
+
+                {
+                    stage === 4 && (
+                        <div className='flex justify-between items-center'>
+                            <div className='flex items-center gap-2'>
+                                <div>{adminRole ? 'Admin' : 'Viewing'}</div>
+                                <div className='text-sm text-gray-500'><i> you are {adminRole ? '' : 'not'} allowed to control the chronos</i></div>
+                            </div>
+                            <div className='flex items-center gap-2  border rounded-[50%] w-8 h-8 justify-center border-green-500/50'>
+                                <div className='text-sm font-inter'>{userCount}</div>
+                            </div>
+                        </div>
+                    )
+                }
                 <div className='flex'>
                     {/* <Button>Start All</Button>
                     <Button className='ml-2'>Pause All</Button>
@@ -102,15 +111,16 @@ const ChronoSession: React.FC = () => {
 
                         }
                         sendAction(action, teams.map((_, i) => i));
-                    }} 
-                    states={[...teams.map(t => t.state)]}
+                    }}
+                        states={[...teams.map(t => t.state)]}
                     />
                 </div>
             </Card>
             {
-                stage === 1 && (
-                    <Card className='w-full max-w-4xl p-4 space-y-4 text-center mt-4'>
-                        <h2 className='text-2xl font-bold'>Loading...</h2>
+                stage !== 4 && (
+                    <Card className='m-4 p-4 flex flex-col items-center gap-4 w-full max-w-[41rem]'>
+                        <div className='text-2xl font-lato'>{stages[stage]}</div>
+                        <div className='w-16 h-16 border-4 border-t-blue-500 border-b-blue-500 border-l-transparent border-r-transparent rounded-full animate-spin' />
                     </Card>
                 )
             }

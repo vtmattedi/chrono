@@ -4,6 +4,7 @@ import { useGlobals } from './Globals';
 import { useAlert } from '../Providers/Alerts';
 import { useTimer } from './Timer';
 import { BASE_URL } from '@/Providers/Urls.tsx';
+import { on } from 'events';
 // "undefined" means the URL will be computed from the `window.location` object
 
 type SocketState = {
@@ -62,7 +63,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
     const sendAction = (action: string, index: number[]) => {
         sendData({ type: 'action', message: { sessionId, action: { type: action, index } } });
-        applyAction(action, index);
+        if (adminRole)
+            applyAction(action, index);
     }
 
     const AlertAction = (type: string, indexi: number[]) => {
@@ -161,6 +163,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             }
         }, 1000);
     }
+    
     const cleanLatency = () => {
         if (pingIntervalRef.current) {
             clearInterval(pingIntervalRef.current);
@@ -170,7 +173,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         setLatency(undefined);
     }
 
-    const joinSession = (sessionId: string, onFailed: (message: string) => void) => {
+    const joinSession = (_sessionId: string, onFailed: (message: string) => void) => {
         if (!token) {
             useToast('error', 'No token available for socket connection');
             return false;
@@ -180,13 +183,13 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             autoConnect: false,
         });
         socket.current.connect();
-        setSessionId(sessionId)
-        console.log('connecting to server', sessionId);
+        setSessionId(_sessionId)
+        console.log('connecting to server', _sessionId);
         socket.current.on('connect', () => {
             setState(true);
             console.log('Connected to server with token:', token);
             sendData({ type: 'identify', message: token });
-            useToast('success', 'Connected to session ' + sessionId);
+            useToast('success', 'Connected to session ' + _sessionId);
             setStage(2);
         });
         socket.current.on('message', (data) => {
@@ -203,6 +206,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             }
             pingRef.current = null;
             setLatency(undefined);
+            joinSession(_sessionId, onFailed); // reset socket
         });
         socket.current.on('connect_error', (err) => {
             setState(false);
@@ -264,8 +268,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         });
         cleanLatency();
     }
-
-
 
     React.useEffect(() => {
         return () => {
