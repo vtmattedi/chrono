@@ -11,6 +11,7 @@ import {
     SheetFooter,
     SheetHeader,
 } from "@/components/ui/sheet"
+import { useNavigate } from 'react-router-dom';
 const Header: React.FC = () => {
 
     const { theme, onMobile } = useGlobals();
@@ -38,6 +39,7 @@ const Header: React.FC = () => {
             });
         }, 250);
     };
+    const Navigate = useNavigate();
     const [menuOpen, setMenuOpen] = React.useState(false);
     const desc = ['click me', '/vtmattedi', '/vitor-mattedi-dev'];
     const { token, alias } = useGlobals();
@@ -83,11 +85,15 @@ const Header: React.FC = () => {
             </div>
             )}
             {
-                <div className='flex gap-1'
+                <div className='flex gap-1 hover:cursor-pointer'
+                    onClick={() => {
+                        Navigate('/');
+                    }}
                     style={{
                         color: 'var(--text-secondary)',
                         fontSize: '0.9rem',
                         alignItems: 'flex-end',
+                        
                     }}>
                     <span className='font-audiowide text-2xl flex gap-1'> <Timer /> ChronoApp</span>
                     <i className='font-lato text-sm'>by mattediworks &copy;</i>

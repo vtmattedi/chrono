@@ -205,7 +205,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             }
             pingRef.current = null;
             setLatency(undefined);
-            joinSession(_sessionId, onFailed); // reset socket
+            // joinSession(_sessionId, onFailed); // reset socket
         });
         socket.current.on('connect_error', (err) => {
             setState(false);

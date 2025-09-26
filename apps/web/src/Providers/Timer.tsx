@@ -192,6 +192,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
         _setTeams([...t]);
     }
     const applyAction = (action: string, index: number[]) => {
+        let lock = true;
         if (action === 'start') startChrono(index);
         else if (action === 'pause') pauseChrono(index);
         else if (action === 'unpause') unpauseChrono(index);
@@ -201,15 +202,18 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
             const seconds = parseInt(action.split(':')[1]);
             if (!seconds) return;
             addTime(index, seconds);
+            lock = false;
         }
         else if (action.startsWith('speed:')) {
             const speed = parseFloat(action.split(':')[1]);
             setSpeed(index, speed as SpeedType);
         }
-        lockState(index, true);
-        setTimeout(() => {
-            lockState(index, false);
-        }, 500);
+        if (lock) {
+            lockState(index, true);
+            setTimeout(() => {
+                lockState(index, false);
+            }, 500);
+        }
     }
     const startTicker = () => {
         setTickerState(true);
@@ -237,7 +241,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
                         if (key === 'finishTime' || key === 'startTime') {
                             (t[i] as any)[key] = new Date(teamsStates[i][key] as string);
                         }
-                        else if (key === 'state') {
+                        else if (key === 'state' || key === 'speed') {
                             if (t[i].stateLocked) {
                                 continue;
                             }
