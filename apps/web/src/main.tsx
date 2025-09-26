@@ -33,7 +33,12 @@ const router = createBrowserRouter([
   }, {
     path: "/admin",
     element: <Layout><Admin /></Layout>,
+  },
+  {
+    path: "*",
+    element: <Layout><Home /></Layout>,
   }
+  
 
 ]);
 createRoot(document.getElementById('root')!).render(
