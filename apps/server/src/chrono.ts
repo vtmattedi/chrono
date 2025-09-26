@@ -60,6 +60,7 @@ class Chrono {
     public avgTickTime: number = 0;
     public countedTicks: number = 0;
     public listeners: string[] = [];
+    private updatesSent: number = 0;
     public onUpdate = (data: any, full: boolean) => { };
     
     constructor(owner: string, teamNames: string[] = [], initialTime: number, start: boolean = false) {
@@ -79,7 +80,8 @@ class Chrono {
     }
     
     private sendUpdates() {
-        this.onUpdate(this.getState(false), false);
+        const full = this.updatesSent++ % 15 === 0; // every 15 ticks send full update
+        this.onUpdate(this.getState(full), full);
     }
     public sendFullUpdate() {
         this.onUpdate(this.getState(true), true);
