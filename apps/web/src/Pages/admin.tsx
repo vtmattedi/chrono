@@ -1,10 +1,11 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import React from 'react';
-import { RotateCcw } from 'lucide-react';
+import { LockKeyholeIcon, RotateCcw } from 'lucide-react';
 import { useGlobals } from '@/Providers/Globals';
 import { useAlert } from '@/Providers/Alerts';
 import { BASE_URL } from '@/Providers/Urls.tsx';
+import { Input } from '@/components/ui/input';
 const Admin: React.FC = () => {
     const [users, setUsers] = React.useState<any>([]);
     const [sessions, setSessions] = React.useState<any>([]);
@@ -76,10 +77,14 @@ const Admin: React.FC = () => {
                 <div className='w-full flex gap-2 text-wrap'>
                     <strong className='w-20'>Alias:</strong> {alias}
                 </div>
-                <input type="password" placeholder='Admin Password' className='w-full mt-2 p-2 border rounded'
-                    value={adminPwd}
-                    onChange={(e) => setAdminPwd(e.target.value)}
+                <div className='w-full flex flex-row gap-1 text-wrap mb-4 items-center' >
+                    <LockKeyholeIcon className='inline-block mr-2' />
+                    <Input type="password" placeholder='Admin Password' className='w-46 p-2 border rounded'
+                        value={adminPwd}
+                        onChange={(e) => setAdminPwd(e.target.value)}
                     />
+                </div>
+
                 <Card >
                     <div className='flex flex-row items-center justify-between w-full px-4 mt-4'>
                         <h2 className='font-audiowide text-xl'>Users</h2>
@@ -108,7 +113,7 @@ const Admin: React.FC = () => {
                     </table>
                 </Card>
                 <div className='flex justify-center '>
-                    <Button className='w-40' onClick={() => {
+                    {/* <Button className='w-40' onClick={() => {
                         fetch(BASE_URL + '/api/newsession', {
                             method: 'POST',
                             headers: {
@@ -125,7 +130,7 @@ const Admin: React.FC = () => {
                         }).catch(err => {
                             useToast('error', 'Error creating session: ' + err.message);
                         });
-                    }}>Start New Session</Button>
+                    }}>Start New Session</Button> */}
                 </div>
                 <Card >
                     <div className='flex flex-row items-center justify-between w-full px-4 mt-4'>

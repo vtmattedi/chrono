@@ -22,7 +22,7 @@ const Teams: React.FC = () => {
     const fileInputRef = React.useRef<HTMLInputElement | null>(null);
     const [showSessionInput, setShowSessionInput] = React.useState(false);
     const [mysessions, setMySessions] = React.useState<string[]>([]);
-    const [sessionsFetching, setSessionsFetching] = React.useState<boolean>(false);
+    const [sessionsFetching, setSessionsFetching] = React.useState<boolean>(true);
     const Navigate = useNavigate();
     // const { setTeams: setGlobalTeams } = useTimer();
 
@@ -225,9 +225,9 @@ const Teams: React.FC = () => {
                             <PopoverContent className='w-48 p-2 gap-2 flex flex-col'>
                                 <div> My Session</div>
                                 <hr />
-                                {sessionsFetching && (<div className='text-sm text-muted-foreground'>Loading <Loader2 className='animate-spin' size={16} /></div>
+                                {sessionsFetching && (<div className='text-sm text-muted-foreground flex items-center gap-2'>Loading <Loader2 className='animate-spin' size={16} /></div>
                                 )}
-                                {mysessions.length === 0 && (<div className='text-sm text-muted-foreground'>No sessions found</div>
+                                {!sessionsFetching && mysessions.length === 0 && (<div className='text-sm text-muted-foreground'>No sessions found</div>
                                 )}
                                 <div className='flex flex-col gap-1'>
                                     {mysessions.map((sessionId) => (

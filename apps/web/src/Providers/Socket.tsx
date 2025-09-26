@@ -85,11 +85,12 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         }
         else if (actionType === 'add') {
             const seconds = parseInt(value);
+            const minutes_str = `${Math.floor(seconds / 60).toString().padStart(2, '0')}: ${Math.abs(seconds % 60).toString().padStart(2, '0')}`;
             if (!seconds) return;
             if (seconds > 0)
-                useToast('info', `${seconds} seconds were added to ${teamstr} ${indexi.map(i => teams[i].name).join(', ')}`);
+                useToast('info', `${minutes_str} were added to ${teamstr} ${indexi.map(i => teams[i].name).join(', ')}`);
             else
-                useToast('info', `${-seconds} seconds were removed from ${teamstr} ${indexi.map(i => teams[i].name).join(', ')}`);
+                useToast('info', `${minutes_str} were removed from ${teamstr} ${indexi.map(i => teams[i].name).join(', ')}`);
         }
         else if (actionType === 'rearm') {
             useToast('info', `Team ${teamstr} ${indexi.map(i => teams[i].name).join(', ')} reseted!`);
@@ -185,7 +186,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         });
         socket.current.connect();
         setSessionId(_sessionId)
-        console.log('connecting to server', _sessionId);
         socket.current.on('connect', () => {
             setState(true);
             console.log('Connected to server with token:', token);
