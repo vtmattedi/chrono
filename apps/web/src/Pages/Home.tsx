@@ -139,7 +139,7 @@ const Teams: React.FC = () => {
     return (
         <div className='h-full flex flex-col items-center justify-start  w-screen p-4 font-inter'>
             <Card className='p-4 mt-4 w-full max-w-4xl items-center'>
-                {process.env.NODE_ENV !== 'development' && (
+                {process.env.NODE_ENV === 'development' && (
                     <Button className=' bg-red-500 text-white hover:bg-red-600'
                         onClick={() => {
                             invalidateToken();

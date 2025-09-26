@@ -51,10 +51,9 @@ const ChronoSession: React.FC = () => {
     const stages = ['Connecting to server...', 'Verifying Identity...', 'Joining session...', 'Loading teams...', 'In session'];
     const failedStages = ['Session Ended', 'Joining session failed', 'Connection Failed'];
     return (
-        <div className='h-full flex flex-col items-center justify-start  w-screen p-2 font-inter'>
-            <Card className={`w-full flex  p-4 ${onMobile ? '' : 'max-w-[41rem]'}`}>
+        <div className='h-full flex flex-col items-center justify-start  w-screen p-2 font-inter overflow-x-hidden'>
+            <Card className={`w-full flex  p-4 ${onMobile ? 'max-w-[95%]' : 'max-w-[41rem]'}`}>
                 <div className='flex justify-between items-start'>
-
                     <div className='flex  flex-row items-center gap-x-4'
                         style={{ flexDirection: onMobile ? 'column' : 'row' }}>
                         <span className='text-4xl font-audiowide'>Session ID:</span>
