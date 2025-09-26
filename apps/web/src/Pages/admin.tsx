@@ -150,13 +150,15 @@ const Admin: React.FC = () => {
                                             style={{ color: color }}
                                         >{session.owner}</td>
                                         <td className='p-2 flex flex-row gap-1 flex-wrap'>
-                                            { Array.isArray(session.listeners) && (
+                                            { Array.isArray(session.listeners) ? (
                                                 <>
                                                     ({session.listeners.length})
                                                     {session.listeners.map((listener: any, index: number) => {
                                                         return <div key={listener} style={{ color: colors[users.findIndex((u: any) => u.userId === listener)] }}>{listener}{index===session.listeners.length-1?'':','}</div>
                                                     })}
                                                 </>
+                                            ) : (
+                                                <div>{session.listeners}</div>
                                             )}
                                         </td>
                                     </tr>
