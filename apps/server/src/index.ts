@@ -41,7 +41,7 @@ chronoHandler.onChronoCreated = (chrono) => {
         }
     }
 }
-chronoHandler.startAfkCheck(12 * 60); // minutes
+chronoHandler.startAfkCheck((Number(process.env.AFK_CHECK_MINS) || 12 * 60)); // minutes
 
 app.io.on("connection", (socket) => {
     socket.on("disconnect", () => {
