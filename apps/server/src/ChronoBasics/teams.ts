@@ -1,5 +1,5 @@
-type TeamState = 'ready' | 'running' | 'paused' | 'finished';
-type SpeedType = 0.5 | 1 | 2 | 4;
+export type TeamState = 'ready' | 'running' | 'paused' | 'finished';
+export type SpeedType = 0.5 | 1 | 2 | 4;
 
 export class Team {
     private static DRIFT_CHECK_INTERVAL_MS = ((3 * 60) + 11) * 1000; // 3 minutes + 11 seconds
@@ -88,7 +88,7 @@ export class Team {
         }
     };
 
-    public checkFinish() {
+    public checkFinish(): boolean {
         if (this.timeLeft <= 0 && this.state === 'running') {
             this.timeLeft = 0;
             this.state = 'finished';

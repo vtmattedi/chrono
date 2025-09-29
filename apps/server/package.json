@@ -13,6 +13,8 @@
   "dependencies": {
     "@neondatabase/serverless": "^0.10.1",
     "@nestjs/schedule": "^6.0.0",
+    "@prisma/client": "^6.16.2",
+    "@prisma/extension-accelerate": "^2.0.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -20,6 +22,7 @@
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.11.3",
     "neon": "^2.0.0",
+    "prisma": "^6.16.2",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "tsx": "^4.19.1"

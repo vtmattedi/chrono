@@ -1,7 +1,9 @@
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { assertDotEnv } from '../Asserter';
+import { assertDotEnv } from '../Util/Asserter';
+import { userHandler } from '../Model/users';
+import { logger_w } from '../Util/Logger';
 
 /**
  * Middleware to authenticate requests using JWT.
@@ -24,15 +26,14 @@ import { assertDotEnv } from '../Asserter';
 const authMiddleware = (req: Request, res: Response, next?: NextFunction) => {
     // Extract the token from the authorization header
     const token = req.header('authorization')?.replace('Bearer ', '');
-    
-    if (!assertDotEnv())
-    {
+
+    if (!assertDotEnv()) {
         res.status(500).send({ error: 'Internal Server Error 065' });
         return;
     }
-    
+
     if (!token) {
-         res.status(401).send({ error: 'Access denied. No token provided.' });
+        res.status(401).send({ error: 'Access denied. No token provided.' });
         return;
     }
     try {
@@ -41,18 +42,63 @@ const authMiddleware = (req: Request, res: Response, next?: NextFunction) => {
                 res.status(401).send({ error: 'Invalid token.' });
                 return;
             }
-            // Attach the uid to the request body
-            const {uid} = decoded;
-            req.body.uid = uid;
+            // Attach the userId to the request body
+            const { userId, alias } = decoded;
+            req.body.userId = userId;
+            const user = userHandler.getUserById(userId);
+            if (!user) {
+                logger_w("Creating user on the fly:", userId, alias);
+                userHandler.createUserWithId(userId, alias);
+            }
             if (next)
                 next();
         }
         );
-       
+
     } catch (err) {
         console.log("error on AuthMiddleWare:", err);
         res.status(500).send({ error: 'Something went wrong' });
     }
 };
 
-export default authMiddleware;
+
+
+const adminAuthMiddleware = (req: Request, res: Response, next?: NextFunction) => {
+
+    const token = req.header('authorization')?.replace('Bearer ', '');
+
+    if (!assertDotEnv()) {
+        res.status(500).send({ error: 'Internal Server Error 065' });
+        return;
+    }
+
+    if (!token) {
+        res.status(401).send({ error: 'Access denied. No token provided.' });
+        return;
+    }
+    try {
+        jwt.verify(token, process.env.JWT_SECRET as string, (err: any, decoded: any) => {
+            if (err) {
+                res.status(401).send({ error: 'Invalid token.' });
+                return;
+            }
+            // Attach the userId and role to the request body
+            const { userId, role } = decoded;
+            req.body.userId = userId;
+            const user = userHandler.getUserById(userId);
+            if (!user || !user.isAdmin()) {
+                res.status(403).send({ error: 'Access denied.' });
+                return;
+            }
+            if (next)
+                next();
+        }
+        );
+
+    } catch (err) {
+        console.log("error on AdminAuthMiddleWare:", err);
+        res.status(500).send({ error: 'Something went wrong' });
+    }
+
+}
+export { authMiddleware, adminAuthMiddleware };

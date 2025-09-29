@@ -1,6 +1,8 @@
 
 
-import { Team } from './Teams';
+import { userHandler } from '../app/Model/users';
+import { logger_s } from '../app/Util/Logger';
+import { Team } from './teams';
 
 /**
  * Represents a multi-team timer/chronometer system with support for multiple teams, adjustable speeds, and state management.
@@ -46,43 +48,56 @@ import { Team } from './Teams';
  * @param {number} initialTime - Initial time (in seconds) for each team.
  * @param {boolean} [start=false] - Whether to start all timers immediately.
  */
+interface LogEntry {
+    timestamp: Date;
+    action: string;
+    details: any;
+}
 class Chrono {
     private intervalId?: NodeJS.Timeout;
-    private createdAt: Date = new Date();
+    public createdAt: Date = new Date();
     public teams: Team[] = [];
     private lastTick: number = 0;
     private nextTick: number = 0;
     private tickNumber: number = 0;
     public sessionId: string = '';
-    private logData: string = '';
-    private owner: string = '';
-    public createdBy: string = '';
+    private logData: LogEntry[] = [];
+    public idHasPrivilege: string[] = [];
+    public isPublic: boolean = false;
+    public owner: string = '';
     public avgTickTime: number = 0;
     public countedTicks: number = 0;
     public listeners: string[] = [];
     private updatesSent: number = 0;
-    private lastActivity: Date = new Date();
+    public lastActivity: Date = new Date();
+    public alias: string = '';
     public onUpdate = (data: any, full: boolean) => { };
-    
+    public onUsersChanged = (data: any) => { };
+
     constructor(owner: string, teamNames: string[] = [], initialTime: number, start: boolean = false, isPublic: boolean = false) {
-        this.owner = isPublic ? 'all' : owner;
-        this.createdBy = owner;
+        this.owner = owner;
+        this.isPublic = isPublic;
+        this.idHasPrivilege =[owner];
         this.sessionId = Math.random().toString(36).slice(6, 12);
         this.teams = teamNames.map(name => new Team(name, initialTime)); // default 5 minutes
         this.createdAt = new Date();
+        this.alias = this.sessionId;
         this.startClock();
+        this.log('created', 'created ' + (isPublic ? 'public' : '') + ' chrono with teams: ' + teamNames.join(', ') + ' initial time: ' + initialTime + 's');
+
         if (start) {
             this.startAll();
         }
     }
     public isCreatedBy(userId: string): boolean {
-        return this.createdBy === userId;
+        return this.owner === userId;
     }
     // Check if a user is authorized (is the owner)
     public isAuthorized(userId: string): boolean {
-        return this.owner === userId || this.owner === 'all';
+        if (this.isPublic) return true;
+        return this.idHasPrivilege.includes(userId);
     }
-    
+
     private sendUpdates() {
 
         const full = this.updatesSent++ % 15 === 0; // every 15 ticks send full update
@@ -93,7 +108,7 @@ class Chrono {
     }
 
     // Return teams configuration as JSON string
-    public TeamsConfig = () => {
+    public teamsConfig = () => {
         const data = {
             name: this.teams.map(t => t.name),
             baseTime: this.teams[0]?.baseTime || 0,
@@ -159,6 +174,7 @@ class Chrono {
 
     // Rearm (reset) the specified teams
     public rearm(idList: number[]) {
+        this.log('action', 'reseted teams: ' + idList.join(', '));
         let updated = false;
         idList.forEach(id => {
             if (this.teams[id]) {
@@ -173,6 +189,7 @@ class Chrono {
     }
 
     public addTime(idList: number[], seconds: number) {
+        this.log('action', 'added time: ' + seconds + 's to teams: ' + idList.join(', '));
         let updated = false;
         idList.forEach(id => {
             if (this.teams[id]) {
@@ -185,6 +202,7 @@ class Chrono {
         return updated;
     }
     public startTeam(idList: number[]) {
+        this.log('action', 'started teams: ' + idList.join(', '));
         let updated = false;
         idList.forEach(id => {
             if (this.teams[id]) {
@@ -197,6 +215,7 @@ class Chrono {
         return updated;
     }
     public pauseTeam(idList: number[]) {
+        this.log('action', 'paused teams: ' + idList.join(', '));
         let updated = false;
         idList.forEach(id => {
             if (this.teams[id]) {
@@ -209,6 +228,7 @@ class Chrono {
         return updated;
     }
     public finishTeam(idList: number[]) {
+        this.log('action', 'finished teams: ' + idList.join(', '));
         let updated = false;
         idList.forEach(id => {
             if (this.teams[id] && this.teams[id].state !== 'finished') {
@@ -223,6 +243,7 @@ class Chrono {
         return updated;
     }
     public setSpeed(idList: number[], speed: 0.5 | 1 | 2 | 4) {
+        this.log('action', 'set speed: ' + speed + 'x to teams: ' + idList.join(', '));
         let updated = false;
         idList.forEach(id => {
             if (this.teams[id]) {
@@ -235,12 +256,20 @@ class Chrono {
         }
         return updated;
     }
-
+    public listUsers() {
+       const users = this.listeners.map(userId => {
+            const user = userHandler.getUserById(userId);
+            return {
+                userId,
+                alias: user?.alias || userId,
+                role: userId === this.owner ? 'owner' : this.isAuthorized(userId) ? 'admin' : 'viewer'
+            }
+        });
+         return users;
+    }
     // Start all teams
     public startAll() {
-        this.teams.forEach(team => {
-            team.start();
-        });
+        this.startTeam(this.teams.map((_, index) => index));
         this.startClock();
         this.sendUpdates();
     }
@@ -271,126 +300,46 @@ class Chrono {
         return data;
     }
 
-    public getLog() {
-        return this.logData;
+    public getSimpleState() {
+        const states = this.teams.map(team => team.state);
+        if (states.every(state => state === 'ready')) return 'ready';
+        if (states.every(state => state === 'finished')) return 'finished';
+        if (states.some(state => state === 'running')) return 'running';
+        if (states.some(state => state === 'paused')) return 'paused';
+        return 'unknown';
     }
 
-}
-
-class ChronoHandler {
-    private chronos: Map<string, Chrono> = new Map();
-    private afkInterval?: NodeJS.Timeout;
-    public onChronoCreated = (chrono: Chrono) => { };
-    public onChronoDeleted = (sessionId: string) => { };
-    public createChrono(ownerId: string, teams: string[], initialTime: number, start: boolean = false, isPublic: boolean = false): Chrono {
-        const chrono = new Chrono(ownerId, teams, initialTime, start, isPublic);
-        this.chronos.set(chrono.sessionId, chrono);
-        this.onChronoCreated(chrono);
-        return chrono;
-    }
-    public addListener(sessionId: string, userId: string): number {
-        const chrono = this.chronos.get(sessionId);
-        if (!chrono) return -1;
-        chrono.listeners.push(userId);
-        return chrono.listeners.length;
-    }
-
-    public listenersCount(sessionId: string): number {
-        const chrono = this.chronos.get(sessionId);
-        if (!chrono) return -1;
-        return chrono.listeners.length;
-    }
-
-    public listChronos(): { sessionId: string; owner: string; listeners: number, createdAt: Date }[] {
-        const res: any[] = [];
-        this.chronos.forEach((chrono) => {
-            res.push({
-                sessionId: chrono.sessionId,
-                owner: chrono['owner'],
-                listeners: [...chrono.listeners],
-                createdAt: chrono['createdAt'], 
-                createdBy: chrono.createdBy
-            });
+    private log (action: string, details: any) {
+        this.logData.push({
+            timestamp: new Date(),
+            action,
+            details
         });
-        return res;
     }
 
-    public removeListener(userId: string): string[] {
-        let found = [];
-        for (const chrono of this.chronos.values()) {
-            const old = Array.from(chrono.listeners);
-            if (old.includes(userId)) {
-                chrono.listeners = chrono.listeners.filter(id => id !== userId);
-                found.push(chrono.sessionId);
+    public getLog() {
+        return this.logData.map(entry => (
+            `[${entry.timestamp.toISOString()}] ${entry.action}: ${typeof entry.details === 'string' ? entry.details : JSON.stringify(entry.details)}`
+        )).join('\n');
+    }
+
+    public modifyPrivileges(userId: string, demote: boolean) {
+        if (demote === true) {
+            if (this.idHasPrivilege.includes(userId)) {
+                this.idHasPrivilege = this.idHasPrivilege.filter(id => id !== userId);
+                this.log('privilege', `removed privilege from user ${userId}`);
             }
         }
-        return found;
+        else {
+            if (!this.idHasPrivilege.includes(userId)) {
+                this.idHasPrivilege.push(userId);
+                this.log('privilege', `added privilege to user ${userId}`);
+            }
+        }
+        logger_s(`User ${userId} ${demote ? 'removed' : 'granted'} admin privileges on chrono ${this.sessionId}`, 'Chrono.modifyPrivileges');
+        this.onUsersChanged(this.listUsers());
     }
 
-    public killChrono(sessionId: string): boolean {
-        let chrono = this.chronos.get(sessionId);
-        if (!chrono) return false;
-        this.chronos.delete(sessionId);
-        chrono.stopClock();
-        this.onChronoDeleted(sessionId);
-        return true;
-    }
-
-    public dispatchAction(sessionId: string, userId: string, action: { type: string, index: number[] }): { result: boolean, message: string } {
-        const chrono = this.chronos.get(sessionId);
-        if (!chrono) return { result: false, message: "Chrono not found" };
-        if (!chrono.isAuthorized(userId)) return { result: false, message: "User not authorized. " };
-        const [_action, _values] = action.type.split(':');
-        if (_action === 'start') {
-            chrono.startTeam(action.index);
-            return { result: true, message: "Teams started" };
-        }
-        else if (_action === 'pause') {
-            chrono.pauseTeam(action.index);
-            return { result: true, message: "Teams paused" };
-        }
-        else if (_action === 'finish') {
-            chrono.finishTeam(action.index);
-            return { result: true, message: "Teams finished" };
-        }
-        else if (_action === 'rearm') {
-            chrono.rearm(action.index);
-            return { result: true, message: "Teams rearmed" };
-        }
-        else if (_action === 'add') {
-            const seconds = parseInt(_values) || 0;
-            if (seconds === 0) return { result: false, message: "Invalid seconds to add" };
-            chrono.addTime(action.index, seconds);
-            return { result: true, message: "Teams time modified" };
-        }
-        else if (_action === 'speed') {
-            const speed = parseFloat(_values) as (0.5 | 1 | 2 | 4);
-            if (![0.5, 1, 2, 4].includes(speed)) return { result: false, message: "Invalid speed" };
-            chrono.setSpeed(action.index, speed);
-            return { result: true, message: "Teams speed set" };
-        }
-        return { result: false, message: "Unknown action" };
-    }
-
-    public startAfkCheck(timeoutMinutes: number = 10) {
-        this.stopAfkCheck();
-        this.afkInterval = setInterval(() => {
-            const now = new Date();
-            this.chronos.forEach((chrono, sessionId) => {
-                const diff = (now.getTime() - chrono['lastActivity'].getTime()) / 1000 / 60; // in minutes
-                if (diff > timeoutMinutes && chrono.listeners.length === 0) {
-                    console.log(`Killing chrono ${sessionId} due to inactivity`);
-                    this.killChrono(sessionId);
-                }
-            });
-        }, 30 * 60 * 1000);
-    }
-    public stopAfkCheck() {
-        if (this.afkInterval) {
-            clearInterval(this.afkInterval);
-            this.afkInterval = undefined;
-        }
-    }
 }
-export const chronoHandler = new ChronoHandler();
+
 export default Chrono;

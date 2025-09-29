@@ -2,10 +2,13 @@
 
 import { Router } from "express";
 import jwt from "jsonwebtoken";
-import { chronoHandler } from "../..//chrono";
-import { userHandler } from "../../users";
+import { chronoHandler } from "../../ChronoBasics/chronoHandler";
+import { userHandler } from "../Model/users";
 import { chronoController } from "../Controllers/chronoController";
 import { exec } from "child_process";
+import {authMiddleware, adminAuthMiddleware} from "../Controllers/authMiddleware";
+import { authController } from "../Controllers/authController";
+import { chronoAdminController } from "../Controllers/chronoAdminController";
 /* 'All in one' Router, may need to be splitted when scaling*/
 const allRouter: Router = Router()
 
@@ -14,64 +17,22 @@ allRouter.get("/api/healthy", (req, res) => {
     res.status(200).send("Server is live.");
 });
 
-allRouter.post("/api/token", (req, res) => {
-    const { alias } = req.body;
-    console.log("Creating token for alias:", alias, "from IP:", req.ip);
-    const user = userHandler.createUser(req.ip || 'unknown', alias || 'anonymous');
-    const token = jwt.sign({
-        alias: alias || 'anonymous',
-        userId: user.userId
-    }, process.env.JWT_SECRET as string);
-    // console.log("Issued token for userId:", user.userId, "alias:", user.alias);
-    res.status(200).json({ token });
-});
+allRouter.post("/api/token", authController.newtoken);
+allRouter.post("/api/validatetoken", authController.validateToken);
 
-allRouter.post("/api/validatetoken", (req, res) => {
-    
-    const  token  = req.headers.authorization ? { token: req.headers['authorization'].split(' ')[1] } :  null ;
-    console.log("Validating token");
-    if (!token || !token) {
-        res.status(400).json({ valid: false, message: 'No token provided' });
-        return;
-    }
-    else {
-        try{
-            const payload = jwt.verify(token.token, process.env.JWT_SECRET as string) as any;
-            const { userId, alias } = payload;
-            const user = userHandler.getUserById(userId);
-            if (!user || user.alias !== alias) {
-                res.status(401).json({ valid: false, message: 'Invalid userId' });
-                console.log("Token invalid, user not found");
-                return;
-            }
-            res.status(200).json({ valid: true, ...payload });
-            console.log("Token valid for userId:", userId, "alias:", alias);
-        } catch (err) {
-            res.status(401).json({ valid: false, message: 'Invalid token' });
-            console.log("Token invalid,");
-        }
-
-    }
-
-});
-
-allRouter.post("/api/newsession", chronoController.startSession);
-
-allRouter.post("/api/killsession", chronoController.killSession);
-allRouter.post("/api/setowner", chronoController.setOwner);
-allRouter.get("/api/mysessions", chronoController.getSessionsWithId);
+// Routes that need authentication
+allRouter.post("/api/newsession", authMiddleware, chronoController.startSession);
+allRouter.post("/api/killsession", authMiddleware, chronoController.killSession);
+allRouter.post("/api/setowner", authMiddleware, chronoController.setOwner);
+allRouter.get("/api/mysessions", authMiddleware, chronoController.getSessionsWithId);
+allRouter.get("/api/sessionlog/:sessionId", authMiddleware, chronoController.getLog);
+allRouter.get("/api/requestadmin", authMiddleware, authController.upgradeToAdmin);
+allRouter.post("/api/updateroles", authMiddleware, chronoController.updateRoles);
 
 
-allRouter.get("/api/listsessions", (req, res) => {
-        const sessions = chronoHandler.listChronos();
-        res.status(200).json({ sessions });
-});
-
-allRouter.get("/api/listusers", (req, res) => {
-        const users = userHandler.listUsers();
-        res.status(200).json({ users });
-});
-
+// Admin routes
+allRouter.get("/api/listsessions", adminAuthMiddleware, chronoAdminController.listSessions);
+allRouter.get("/api/listusers", adminAuthMiddleware, chronoAdminController.listUsers);
 
 
 export { allRouter };

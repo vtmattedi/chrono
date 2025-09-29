@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import * as path from "path";
 import http from "http";
 import { Server as SocketIOServer } from "socket.io";
+import { logger_i, logger_w } from "./app/Util/Logger";
 
 /*Here I created a basic server because I could have 3 separated server, front, api, and auth*/
 /*But for constrains in the hosting plataform, I have decided to make only one server*/
@@ -24,11 +25,11 @@ class BasicServer {
       origin: origns, // allow to server to accept request from different origin
       credentials: true // allow session cookie from browser to pass through
     }))
-    console.log('cors enabled for:', origns);
+    logger_i('cors enabled for:', origns);
   }
 
   protected withCookies() {
-    console.log('cookies enabled');
+    logger_i('cookies enabled');
     this.server.use(cookieParser());
   }
 
@@ -51,7 +52,7 @@ class Server extends BasicServer {
 
     /*Serves the React Page*/
     if (process.env.SERVER_ONLY === 'false') {
-      console.log("Serving frontend from folder:", process.env.FRONTEND_FOLDER ?? './front/dist');
+      logger_i("Serving frontend from folder:", process.env.FRONTEND_FOLDER ?? './front/dist');
       const frontendFolder = process.env.FRONTEND_FOLDER ?? './front/dist';
       this.server.use(express.static(path.resolve(frontendFolder)));
       this.server.use('*', (req, res) => {
@@ -59,7 +60,7 @@ class Server extends BasicServer {
       });
     }
     else {
-      console.log("Server only mode, not serving frontend");
+      logger_w("Server only mode, not serving frontend");
       this.server.use('*', (req, res) => {
         res.redirect(301, corsOrigin);
       });
