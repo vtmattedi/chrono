@@ -75,7 +75,7 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
                     clearAlert();
                 }
             }} >
-                <AlertDialogContent >
+                <AlertDialogContent  className='z-100100'>
                     <AlertDialogHeader>
                         <AlertDialogTitle className='font-lato'> {alert?.title}</AlertDialogTitle>
                         <AlertDialogDescription asChild className='font-inter'>

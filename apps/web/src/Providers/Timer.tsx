@@ -17,7 +17,7 @@ export type Team = {
     finishTime?: Date;
     speed?: SpeedType; // speed multiplier (1x, 2x, etc.)
     finalDrift?: number; // in ms, positive or negative
-    stateLocked?: boolean; // if true, state cannot be changed manually
+    stateLocked?: boolean; // if true, state wont be changed by updateTeamsState
 }
 
 // name: team.name,
@@ -239,7 +239,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
             const seconds = parseInt(action.split(':')[1]);
             if (!seconds) return;
             addTime(index, seconds);
-            lock = false;
+
         }
         else if (action.startsWith('speed:')) {
             const speed = parseFloat(action.split(':')[1]);
@@ -259,11 +259,6 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
         setTickerState(false);
     }
 
-    //  name: team.name,
-    //             state: team.state,
-    //             timeLeft: team.timeLeft,
-    //             speed: team.speed,
-    //             finished: team.finishTime || null
     const updateTeamsState = (teamsStates: TeamUpdate[]) => {
         try {
             const t = teamRefs.current;
@@ -345,7 +340,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
         return () => clearInterval(ticker.current!);
     }, [teams, tickerState]);
     return (
-        <TimerContext.Provider value={{ updateTeamsState, teams, exportCSV, setTeams,  addTime, startTicker, stopTicker, setTeamsFromConfig, applyAction }}>
+        <TimerContext.Provider value={{ updateTeamsState, teams, exportCSV, setTeams, addTime, startTicker, stopTicker, setTeamsFromConfig, applyAction }}>
             {children}
         </TimerContext.Provider>
     );

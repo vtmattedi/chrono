@@ -38,14 +38,12 @@ const Admin: React.FC = () => {
             fetch(BASE_URL + '/api/listusers').then(res => res.json()),
             fetch(BASE_URL + '/api/listsessions').then(res => res.json())
         ]).then(([usersData, sessionsData]) => {
-            console.log('Fetched users and sessions:', usersData.users, sessionsData.sessions);
             setUsers(usersData.users);
             setSessions(sessionsData.sessions);
             setLastFetched(new Date());
         }).catch(error => {
             console.error('Error fetching data:', error);
         }).finally(() => {
-            console.log('Finished fetching data');
             setLoading(false);
             setLatency(performance.now() - ping.current);
         });

@@ -1,15 +1,25 @@
 import React, { createContext, useContext, useState, type ReactNode } from 'react';
 import { useAlert } from '@/Providers/Alerts.tsx';
 import { BASE_URL } from '@/Providers/Urls.tsx';
+
 type GlobalState = {
     theme: 'light' | 'dark';
     setDarkMode: (darkMode: boolean) => void;
     onMobile: boolean;
     token: string | null;
-    setToken: (token: string | null) => void;
     alias: string | null;
     setAlias: (alias: string | null) => void;
+    usersettings: any;
+    setUsersettings: (settings: any) => void;
     invalidateToken: () => void;
+    addToSessionHistory: (session: SessionRecord) => void;
+    clearHistory: (sessionId: string) => void;
+    sessionsHistory: SessionRecord[];
+    mysessions: SessionRecord[];
+    user : {
+        id: string | null,
+        role: string | null,
+    };
 };
 
 const GlobalContext = createContext<GlobalState | undefined>(undefined);
@@ -28,13 +38,31 @@ type GlobalProviderProps = {
 
 const MAX_WIDTH_PX = 768;
 
+export type SessionRecord = {
+    id: string;
+    alias: string;
+};
+
+
+
 export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
     const [onMobile, setOnMobile] = useState<boolean>(window.innerWidth < MAX_WIDTH_PX);
     const [alias, _setAlias] = useState<string | null>('webclient');
     const [token, setToken] = useState<string | null>(null);
+    const [mysessions, setMysessions] = useState<SessionRecord[]>([]);
+    const [usersettings, setUsersettings] = useState<any>({});
+    const [sessionsHistory, setSessionsHistory] = useState<SessionRecord[]>([]);
+    const [user, setUser] = useState<{
+        id: string | null,
+        role: string | null,
+    }>({
+        id: null,
+        role: null,
+
+    });
     const { useToast } = useAlert();
-    
+
     const setDarkMode = (enabled: boolean) => {
         if (enabled) {
             document.documentElement.classList.add('dark');
@@ -57,23 +85,38 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
 
     const verifyToken = async (token: string) => {
         console.log('Verifying token:', token);
-        return fetch(BASE_URL + '/api/validatetoken', {
-            headers: { 'Content-Type': 'application/json',
+        fetch(BASE_URL + '/api/validatetoken', {
+            headers: {
+                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
-             },
+            },
             method: 'POST',
             body: '{}',
-        }).then(res => res.json()).then(data => {
+        }).then((data) => {
             console.log('Token verification response:', data);
-            return data.valid;
+            if (data.ok) {
+                return data.json();
+            }
+        }).then((data) => {
+            if (data.valid) {
+                setUser({
+                    id: data.userId,
+                    role: data.role,
+                });
+            }
+            else {
+                console.warn('Token is invalid, requesting new token');
+                invalidateToken();
+                // return false;
+            }
         }).catch(err => {
             console.error('Error verifying token:', err);
-            return false;
+            // return false;
         });
     };
     const requestNewToken = async (alias: string) => {
         console.log('Requesting new token for alias:', alias);
-        fetch(BASE_URL + '/api/token',{
+        fetch(BASE_URL + '/api/token', {
             headers: { 'Content-Type': 'application/json' },
             method: 'POST',
             body: JSON.stringify({ alias: alias }),
@@ -93,22 +136,60 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
         localStorage.removeItem('token');
         requestNewToken(alias || 'webclient');
     }
+    const clearHistory = (sessionId: string) => {
+        console.log('Clearing session from history:', sessionId);
+        if (sessionId === 'all') {
+            setSessionsHistory([]);
+            localStorage.removeItem('sessionsHistory');
+            return;
+        }
+        setSessionsHistory(prev => prev.filter(s => s.id !== sessionId));
+    }
+
+    const addToSessionHistory = (session: SessionRecord) => {
+        console.log('Adding to session history:', session);
+
+        setSessionsHistory(prev => {
+            const exists = prev.find(s => s.id === session.id);
+            if (!exists) {
+                return [...prev, session];
+            }
+            return [...prev.filter(s => s.id !== session.id), session];
+        });
+    }
+    React.useEffect(() => {
+        if (sessionsHistory.length > 0) {
+            console.log('Saving sessions history to localStorage:', sessionsHistory);
+            localStorage.setItem('sessionsHistory', JSON.stringify(sessionsHistory));
+        }
+    }, [sessionsHistory]);
     React.useEffect(() => {
         console.log('Token changed:', token);
         useToast('info', token ? 'Token set' : 'No token available');
+        if (!token) return;
         if (token) {
-            verifyToken(token).then(isValid => {
-                if (!isValid) {
-                    console.log('Token is invalid, requesting new token');
-                    requestNewToken(alias || 'webclient');
-
-                } else {
-                    console.log('Token is valid');
-                    useToast('success', 'Token is valid');
-                }
-            });
+            verifyToken(token);
         }
+
+        fetch(BASE_URL + '/api/mysessions', {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        }).then(res => {
+            if (!res.ok) {
+                console.error('Failed to fetch sessions:', res.statusText);
+                return;
+            }
+            return res.json();
+        }).then(data => {
+            console.log('Fetched sessions:', data);
+            setMysessions(data.sessions || []);
+        }).catch(err => {
+            console.error('Error fetching sessions:', err);
+        });
     }, [token]);
+
     React.useEffect(() => {
         // On mount, check the preferred theme in local storage or system preference
         // and apply to the document.
@@ -124,7 +205,7 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
         };
         window.addEventListener('resize', handleResize);
         handleResize(); // Initial check
-         const savedAlias = localStorage.getItem('alias');
+        const savedAlias = localStorage.getItem('alias');
         if (savedAlias) {
             _setAlias(savedAlias);
         }
@@ -135,15 +216,29 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
             setToken(savedToken);
         } else {
             console.log('No saved token found, requesting new token');
-            requestNewToken( savedAlias || 'webclient');
+            requestNewToken(savedAlias || 'webclient');
         }
+        const savedSessions = localStorage.getItem('sessionsHistory');
+        if (savedSessions) {
+            try {
+                const parsed = JSON.parse(savedSessions);
+                if (Array.isArray(parsed)) {
+                    setSessionsHistory(parsed.map(s => ({ id: s.id, alias: s.alias })));
+                }
+            } catch (e) {
+                console.error('Error parsing saved sessions history:', e);
+            }
+        }
+
+
         return () => {
             window.removeEventListener('resize', handleResize);
         };
+
     }, []);
-    
+
     return (
-        <GlobalContext.Provider value={{ theme, setDarkMode, onMobile, token, alias, setAlias, setToken, invalidateToken }}>
+        <GlobalContext.Provider value={{ theme, setDarkMode, onMobile, token, alias, setAlias, invalidateToken, usersettings, setUsersettings, sessionsHistory, addToSessionHistory, clearHistory, mysessions, user }}>
             {children}
         </GlobalContext.Provider>
     );

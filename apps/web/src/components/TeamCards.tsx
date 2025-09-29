@@ -6,6 +6,7 @@ import { Card } from './ui/card';
 import { PlayBtn, PauseBtn, StopBtn, SpeedControl } from './btns.tsx';
 import type { HTMLAttributes } from 'react';
 import TimeInput from './timeInput.tsx';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip.tsx';
 
 interface TeamCardsProps extends HTMLAttributes<HTMLDivElement> {
     onAction?: (action: string, index: number[]) => void;
@@ -52,11 +53,16 @@ const TeamCards: React.FC<TeamCardsProps> = ({ onAction }, ...props) => {
                 teams.map((team, index) => (
                     <Card key={index} className='m-2 p-4 w-80 gap-2'>
                         <div className='flex justify-between items-center'>
-                            <h2 className='font-lato text-xl mb-2'
-                                onSelect={(e) => {
-                                    console.log(e);
-                                }}
-                            >{maxName(team.name)}</h2>
+                            {team.name.length <= 18 ? <h2 className='font-lato text-xl mb-2'>{team.name}</h2> : (
+                                <Tooltip>
+                                    <TooltipTrigger className='hover:cursor-default' asChild>
+                                        <h2 className='font-lato text-xl mb-2'>{maxName(team.name)}</h2>
+                                    </TooltipTrigger>
+                                    <TooltipContent sideOffset={4} className='max-w-md'>
+                                        <h5 className='font-lato text-[1rem] mb-2'>{team.name}</h5>
+                                    </TooltipContent>
+                                </Tooltip>
+                            )}
                             <span
                                 style={{
                                     color: pallete[team.state] || 'black',
@@ -85,13 +91,13 @@ const TeamCards: React.FC<TeamCardsProps> = ({ onAction }, ...props) => {
                                     <div className='flex justify-between items-center w-full px-4'>
                                         <span className='text-muted-foreground text-sm'>Running Time:</span>
                                         <span className='font-inter text-2xl'>
-                                            {secondsToTime((team.timeRunning ))}
+                                            {secondsToTime((team.timeRunning))}
                                         </span>
                                     </div>
                                     <div className='flex justify-between items-center w-full px-4'>
-                                            <span className='text-muted-foreground text-sm'>Added Time:</span>
-                                            <span className='font-inter text-lg text-green-500'>
-                                                {secondsToTime((team.timeAdded))}
+                                        <span className='text-muted-foreground text-sm'>Added Time:</span>
+                                        <span className='font-inter text-lg text-green-500'>
+                                            {secondsToTime((team.timeAdded))}
                                         </span>
                                     </div>
                                     <div className='flex justify-between items-center w-full px-4'>
