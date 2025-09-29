@@ -22,7 +22,7 @@ import { useLocation } from 'react-router-dom';
 import { useAlert } from '@/Providers/Alerts';
 const Header: React.FC = () => {
     const { showAlert } = useAlert();
-    const { theme, onMobile, invalidateToken, sessionsHistory, user, alias, setAlias } = useGlobals();
+    const { theme, onMobile, invalidateToken, sessionsHistory, user, alias } = useGlobals();
     const fireConfetti = () => {
         const duration = 5 * 1000;
         const animationEnd = Date.now() + duration;
