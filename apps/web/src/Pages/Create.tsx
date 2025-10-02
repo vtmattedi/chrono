@@ -242,10 +242,12 @@ const CreateChrono: React.FC = () => {
                         <PopoverTrigger asChild >
                             <Button variant="outline"
                                 className='w-32 -h10 text-xl font-lato'>
-                                <SlidersHorizontal />  Options <ChevronDown className={'transition-transform duration-200 ' + (optionsModalOpen ? 'rotate-[-180deg]' : '')} />
+                                <SlidersHorizontal />  Options <ChevronDown className={'transition-transform duration-200 ' + (optionsModalOpen ? 'rotate-[-180deg]' : '')}
+                            />
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent className='w-72 p-4 bg-(--background) border-1 border-(--foreground) rounded-md shadow-md text-(--foreground) z-50'>
+                        <PopoverContent className='w-72 p-4 bg-(--background) border-1 border-(--foreground) rounded-md shadow-md text-(--foreground) z-50'
+                        align='center' side='bottom'>
 
                             <div className='flex flex-col items-start gap-1'>
                                 {

@@ -16,18 +16,19 @@ interface InfoTooltipProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const InfoTooltip: React.FC<InfoTooltipProps> = ({ legend, legendClassName, children, iconSize = 24, ...props }) => {
+    const [open, setOpen] = React.useState(false);
     return (
-        <Tooltip >
+        <Tooltip open={open} onOpenChange={setOpen} >
             <TooltipTrigger asChild>
-                <div className='text-gray-500 ' {...props}>
+                <div className='text-gray-500 ' {...props} onClick={() => setOpen(!open)}>
                     <InfoIcon
                         size={iconSize}
                     />
                 </div>
             </TooltipTrigger>
-            <TooltipContent sideOffset={4} className='z-100001 text-md font-inter max-w-[90vw]'>
+            <TooltipContent sideOffset={4} className='z-100001 text-md font-inter max-w-[90vw] flex-wrap break-words ' >
             {
-                legend && <div className={legendClassName}>{legend}</div>
+                legend && <div className={`flex text-center ${legendClassName}`}>{legend}</div>
             }
             {
                 !legend && <>{children}</>

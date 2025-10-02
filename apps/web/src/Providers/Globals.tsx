@@ -15,8 +15,8 @@ type GlobalState = {
     addToSessionHistory: (session: SessionRecord) => void;
     clearHistory: (sessionId: string) => void;
     sessionsHistory: SessionRecord[];
-    mysessions: SessionRecord[];
-    user : {
+    mysessions: any[];
+    user: {
         id: string | null,
         role: string | null,
     };
@@ -53,6 +53,7 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
     const [mysessions, setMysessions] = useState<SessionRecord[]>([]);
     const [usersettings, setUsersettings] = useState<any>({});
     const [sessionsHistory, setSessionsHistory] = useState<SessionRecord[]>([]);
+    const sessionUpdateTimer = React.useRef<NodeJS.Timeout | null>(null);
     const [user, setUser] = useState<{
         id: string | null,
         role: string | null,
@@ -95,23 +96,31 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
         }).then((data) => {
             console.log('Token verification response:', data);
             if (data.ok) {
-                return data.json();
-            }
-        }).then((data) => {
-            if (data.valid) {
-                setUser({
-                    id: data.userId,
-                    role: data.role,
+                data.json().then((data) => {
+                    // fetch successful 
+                    if (data.valid) {
+                        // token is valid
+                        setUser({
+                            id: data.userId,
+                            role: data.role,
+                        });
+                    }
+                    else {
+                        // token is invalid
+                        console.warn('Token is invalid, requesting new token');
+                        invalidateToken();
+                    }
                 });
             }
             else {
+                // token is invalid
                 console.warn('Token is invalid, requesting new token');
                 invalidateToken();
-                // return false;
             }
         }).catch(err => {
+            // if fetch fails try again
             console.error('Error verifying token:', err);
-            // return false;
+            setTimeout(() => verifyToken(token), 5000);
         });
     };
     const requestNewToken = async (alias: string) => {
@@ -120,21 +129,46 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
             headers: { 'Content-Type': 'application/json' },
             method: 'POST',
             body: JSON.stringify({ alias: alias }),
-        }).then(res => res.json()).then(data => {
-            console.log('Received new token:', data);
-            if (data.token) {
-                setToken(data.token);
-                localStorage.setItem('token', data.token);
+        }).then(res => {
+            console.log('Token request response:', res);
+            if (res.ok) {
+                res.json().then(data => {
+                    console.log('Received new token:', data);
+                    if (data.token) {
+                        setToken(data.token);
+                        localStorage.setItem('token', data.token);
+                    }
+                });
             }
         }).catch(err => {
             console.error('Error fetching token:', err);
+            setTimeout(() => requestNewToken(alias), 5000);
         });
 
+    }
+    const updateMySessions = async (token: string) => {
+        fetch(BASE_URL + '/api/mysessions', {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        }).then(res => {
+            if (!res.ok) {
+                console.error('Failed to fetch sessions:', res.statusText);
+                return;
+            }
+            return res.json();
+        }).then(data => {
+            setMysessions(data.sessions || []);
+        }).catch(err => {
+            console.error('Error fetching sessions:', err);
+        });
     }
     const invalidateToken = () => {
         setToken(null);
         localStorage.removeItem('token');
         requestNewToken(alias || 'webclient');
+        setUser({ id: null, role: null });
     }
     const clearHistory = (sessionId: string) => {
         console.log('Clearing session from history:', sessionId);
@@ -169,25 +203,19 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
         if (!token) return;
         if (token) {
             verifyToken(token);
+            updateMySessions(token);
+            sessionUpdateTimer.current = setInterval(() => {
+                if (token) {
+                    updateMySessions(token);
+                }
+            }, 5000);
         }
+        return () => {
+            if (sessionUpdateTimer.current) {
+                clearInterval(sessionUpdateTimer.current);
+            }
+        };
 
-        fetch(BASE_URL + '/api/mysessions', {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        }).then(res => {
-            if (!res.ok) {
-                console.error('Failed to fetch sessions:', res.statusText);
-                return;
-            }
-            return res.json();
-        }).then(data => {
-            console.log('Fetched sessions:', data);
-            setMysessions(data.sessions || []);
-        }).catch(err => {
-            console.error('Error fetching sessions:', err);
-        });
     }, [token]);
 
     React.useEffect(() => {
@@ -229,6 +257,7 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
                 console.error('Error parsing saved sessions history:', e);
             }
         }
+
 
 
         return () => {
