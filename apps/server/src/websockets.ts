@@ -1,8 +1,10 @@
+import { jwtVerify } from "jose";
 import { Server } from "./app";
 import { userHandler } from "./app/Model/users";
 import { logger_s } from "./app/Util/Logger";
 import { chronoHandler } from "./ChronoBasics/chronoHandler";
 import jwt from "jsonwebtoken";
+import { verifyAndDecryptJWT } from "./app/Util/tokens";
 export const configureWebsockets = (app: Server) => {
 
     chronoHandler.onChronoCreated = (chrono) => {
@@ -42,22 +44,25 @@ export const configureWebsockets = (app: Server) => {
                     socket.send(JSON.stringify({ type: "error", message: "No token provided, disconnecting" }));
                     socket.disconnect();
                     return;
+                
                 }
-                jwt.verify(data.message, process.env.JWT_SECRET as string, (err: any, decoded: any) => {
-                    if (err) {
+
+                verifyAndDecryptJWT(data.message).then(payload => {
+                    if (!payload) {
                         socket.send(JSON.stringify({ type: "error", message: "Invalid token, disconnecting" }));
                         socket.disconnect();
                         return;
                     }
-                    const result = userHandler.addSocket(decoded.userId, socket.id);
+                    const result = userHandler.addSocket(payload.userId as string, socket.id);
                     socket.send(JSON.stringify({
                         type: "identify_result", message: {
                             success: result,
-                            userId: decoded.userId,
-                            alias: decoded.alias
+                            userId: payload.userId,
+                            alias: payload.alias
                         }
                     }));
                 });
+
             }
             else if (data.type === "echo") {
                 socket.send(JSON.stringify({ type: "echoresponse", message: data.message }));

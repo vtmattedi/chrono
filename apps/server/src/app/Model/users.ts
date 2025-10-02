@@ -6,7 +6,7 @@ export class User {
     userId: string;
     alias: string;
     socketId: string[];
-    private role: userRole;
+    role: userRole;
 
     constructor(userId: string, alias?: string) {
         this.userId = userId;
@@ -75,7 +75,7 @@ export class UserHandler {
     }
 
     public issueNewUserId(): string {
-        const newUserId = Math.random().toString(36).slice(2, 12);
+        const newUserId = Math.random().toString(36).slice(4, 12);
         return newUserId;
     }
 

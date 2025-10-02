@@ -62,6 +62,7 @@ class Chrono {
     private tickNumber: number = 0;
     public sessionId: string = '';
     private logData: LogEntry[] = [];
+    public publicLogs: boolean = false;
     public idHasPrivilege: string[] = [];
     public isPublic: boolean = false;
     public owner: string = '';
