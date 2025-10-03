@@ -18,7 +18,7 @@ import StateBadge from './StateBadge';
 import ThemeSelector from './ThemeSelector';
 const MenuButtons: React.FC<MenuButtonsProps> = ({ onlyIcon, ...rest }) => {
     const { showAlert } = useAlert();
-    const { theme, onMobile, invalidateToken, sessionsHistory, user, alias, mysessions } = useGlobals();
+    const {  invalidateToken, sessionsHistory, user, alias, mysessions } = useGlobals();
     const Navigate = useNavigate();
     const [settingsOpen, setSettingsOpen] = React.useState(false);
     const [quickActionsOpen, setQuickActionsOpen] = React.useState(false);

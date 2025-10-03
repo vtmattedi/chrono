@@ -2,7 +2,7 @@ import React from 'react';
 
 import ThemeSelector from './ThemeSelector';
 import confetti from 'canvas-confetti';
-import { ArrowRight, CheckCircle, ChevronDown, FileSpreadsheet, FileX, History, Loader2, MenuIcon, Navigation, PlusCircle, Settings, Timer, Upload, X } from 'lucide-react';
+import { MenuIcon } from 'lucide-react';
 import { useGlobals } from '../Providers/Globals';
 import {
     Sheet,
@@ -12,10 +12,10 @@ import {
     SheetHeader,
     SheetTitle,
 } from "@/components/ui/sheet"
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 
-import { useLocation } from 'react-router-dom';
-import { useAlert } from '@/Providers/Alerts';
+// import { useLocation } from 'react-router-dom';
+// import { useAlert } from '@/Providers/Alerts';
 import MenuButtons from './MenuButtons';
 const Header: React.FC = () => {
    
@@ -45,7 +45,7 @@ const Header: React.FC = () => {
         }, 250);
     };
 
-    const Navigate = useNavigate();
+    // const Navigate = useNavigate();
     const [menuOpen, setMenuOpen] = React.useState(false);
     const desc = ['click me', '/vtmattedi', '/vitor-mattedi-dev'];
     const images = () => {
