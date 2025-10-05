@@ -17,6 +17,4 @@ services:
       - "traefik.http.routers.chrono.middlewares=chrono-headers"
     ports:
       - 4500:4500
-    networks:
-      - traefik_network
 
