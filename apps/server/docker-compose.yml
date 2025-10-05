@@ -1,0 +1,9 @@
+services:
+  node:
+    container_name: chrono
+    build: ./
+    restart: always
+    ports:
+      - 4500:4500
+    env_file:
+      - ./.env
