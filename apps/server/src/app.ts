@@ -45,6 +45,7 @@ class Server extends BasicServer {
   constructor() {
     super();
     const corsOrigin = process.env.NODE_ENV === 'production' ? 'https://mwchrono.vercel.app' : 'http://localhost:5173';
+    logger_i("CORS Origin set to:", corsOrigin);
     this.middleware();
     this.withCookies();
     this.withcors(corsOrigin);
