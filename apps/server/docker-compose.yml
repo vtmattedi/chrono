@@ -5,7 +5,7 @@ services:
     restart: always
     labels:
       - traefik.enable=true
-      - traefik.http.routers.chrono.rule=Host(`chrono.${DOMAIN_NAME}`)
+      - traefik.http.routers.chrono.rule=Host(`chrono.mattedidev.com.br`)
       - traefik.http.routers.chrono.tls=true
       - traefik.http.routers.chrono.entrypoints=web,websecure
       - traefik.http.routers.chrono.tls.certresolver=mytlschallenge
