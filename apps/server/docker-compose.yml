@@ -3,6 +3,13 @@ services:
     container_name: chrono
     build: ./
     restart: always
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.chrono.rule=Host(`chrono.${DOMAIN_NAME}`)
+      - traefik.http.routers.chrono.tls=true
+      - traefik.http.routers.chrono.entrypoints=web,websecure
+      - traefik.http.routers.chrono.tls.certresolver=mytlschallenge
+      - traefik.http.services.chrono.loadbalancer.server.port=4500
     ports:
       - 4500:4500
 
