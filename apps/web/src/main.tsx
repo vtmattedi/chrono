@@ -32,13 +32,14 @@ const router = createBrowserRouter([
     element: <Layout><ChronoSession /></Layout>,
   }, {
     path: "/admin",
-    element: <Layout><Admin /></Layout>,
+    // element: <Layout><Admin /></Layout>,
+    element: <Layout><Home /></Layout>,
   },
   {
     path: "*",
     element: <Layout><Home /></Layout>,
   }
-  
+
 
 ]);
 createRoot(document.getElementById('root')!).render(
@@ -48,7 +49,7 @@ createRoot(document.getElementById('root')!).render(
       <TimerProvider>
         <SocketProvider>
           <RouterProvider router={router} />
-          <Toaster richColors closeButton/>
+          <Toaster richColors closeButton />
         </SocketProvider>
       </TimerProvider>
     </GlobalProvider>
