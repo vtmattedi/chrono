@@ -77,6 +77,8 @@ const adminAuthMiddleware = async (req: Request, res: Response, next?: NextFunct
     }
     const { userId, alias, role } = payload as { userId: string, alias: string, role: 'admin' | 'user' };
     req.body.userId = userId;
+    req.body.jwt_role = role;
+    req.body.jwt_alias = alias;
     const user = userHandler.getUserById(userId);
     if (!user) {
        res.status(404).json({ message: 'userID not found', userId, role });
