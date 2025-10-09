@@ -28,7 +28,7 @@ class AuthController {
             }
         }
         else {
-            user = userHandler.createUser(alias || 'anonymous');
+            user = userHandler.createUser(alias || 'user' + Crypto.randomBytes(2).toString('hex'));
         }
         const token = await issueEncryptedJWT({
             userId: user.userId,
@@ -67,7 +67,7 @@ class AuthController {
             res.status(404).json({ message: 'userID not found', valid: false, userId, role });
             return;
         }
-        res.status(200).json({ valid: true, userId, role });
+        res.status(200).json({ valid: true, userId, role, alias: user.alias });
         return;
 
     }
