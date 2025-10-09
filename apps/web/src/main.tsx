@@ -14,7 +14,7 @@ import { TimerProvider } from './Providers/Timer.tsx';
 import { SocketProvider } from './Providers/Socket.tsx';
 import ChronoSession from './Pages/Session.tsx';
 import Home from './Pages/Home.tsx';
-import Admin from './Pages/admin.tsx';
+// import Admin from './Pages/admin.tsx';
 const router = createBrowserRouter([
   {
     path: "/",
