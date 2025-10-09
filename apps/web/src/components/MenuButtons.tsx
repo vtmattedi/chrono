@@ -18,7 +18,7 @@ import StateBadge from './StateBadge';
 import ThemeSelector from './ThemeSelector';
 const MenuButtons: React.FC<MenuButtonsProps> = ({ onlyIcon, ...rest }) => {
     const { showAlert } = useAlert();
-    const {  invalidateToken, sessionsHistory, user, alias, mysessions } = useGlobals();
+    const { invalidateToken, sessionsHistory, user, alias, mysessions, setAlias } = useGlobals();
     const Navigate = useNavigate();
     const [settingsOpen, setSettingsOpen] = React.useState(false);
     const [quickActionsOpen, setQuickActionsOpen] = React.useState(false);
@@ -95,7 +95,14 @@ const MenuButtons: React.FC<MenuButtonsProps> = ({ onlyIcon, ...rest }) => {
 
     const popoverContentClassName = 'w-64 bg-[#bbb] dark:bg-[#222] z-10000 font-lato'
     const popoverTriggerClassName = 'cursor-pointer hover:opacity-70 items-center flex flex-row gap-2 font-lato'
-
+    const saveAlias = () => {
+        const newAlias = (document.getElementById('alias-input') as HTMLInputElement).value;
+        if (newAlias.length > 20) {
+            showAlert('Alias too long', 'Alias must be 20 characters or less.', () => { }, 'ok');
+            return;
+        }
+        setAlias(newAlias);
+    }
     return (
         <div {...rest}>
             <Popover open={settingsOpen} onOpenChange={setSettingsOpen} >
@@ -129,7 +136,7 @@ const MenuButtons: React.FC<MenuButtonsProps> = ({ onlyIcon, ...rest }) => {
                                             <div className='flex flex-row gap-1 justify-center w-full '>
                                                 <span className='text-muted-foreground'><i>alias</i></span>
                                             </div>
-                                            <InfoTooltip iconSize={16}>
+                                            <InfoTooltip iconSize={18}>
                                                 <div className='flex flex-col gap-2 z-100001 w-md'>
                                                     <span>Your alias is used by others to identify you in sessions.</span>
                                                 </div>
@@ -147,25 +154,38 @@ const MenuButtons: React.FC<MenuButtonsProps> = ({ onlyIcon, ...rest }) => {
                                                 </>
                                             ) : (
                                                 <>
-                                                    <Input onBlur={() => { setEditingAlias(false); }} defaultValue={alias || 'Anonymous'} placeholder='Enter alias' />
+                                                    <Input onBlur={() => { setEditingAlias(false); saveAlias(); }} defaultValue={alias || 'Anonymous'} placeholder='Enter alias' id='alias-input' />
                                                     <Save className='inline-block ml-1 hover:opacity-70 hover:cursor-pointer' size={32}
-                                                        onClick={() => { setEditingAlias(false); }}
+                                                        onClick={() => { setEditingAlias(false); saveAlias(); }}
                                                     />
                                                 </>
                                             )}
                                         </div>
-                                        <div className='flex flex-row gap-1 justify-center w-full '>
-                                            {
-                                                user.role === 'admin' ? (
-                                                    <Badge className='mt-1 bg-orange-400 text-black font-inter' >Admin</Badge>
-                                                ) : (
-                                                    <Badge className='mt-1 bg-blue-400 text-black font-inter' variant='secondary'>{user.role || 'No Role'}</Badge>
-                                                )}
+                                        <div className='flex flex-row justify-between w-full items-center'>
+                                            <div className='flex flex-row  justify-center w-full '>
+                                                {
+                                                    user.role === 'admin' ? (
+                                                        <Badge className='bg-orange-400 text-black font-inter' >Admin</Badge>
+                                                    ) : (
+                                                        <Badge className='bg-blue-400 text-black font-inter' variant='secondary'>{user.role || 'No Role'}</Badge>
+                                                    )}
+                                            </div>
+                                            <InfoTooltip iconSize={18}>
+                                                <div className='flex flex-col gap-2 z-100001 min-w-md flex-wrap break-words max-w-md'>
+                                                    <div className='flex flex-row gap-1 items-center'>
+                                                        <div className='flex flex-row gap-1 '>
+                                                            <span className='text-sm text-muted-foreground'>User ID:</span>
+                                                        </div>
+                                                        <span className='text-lato break-all'>{user.id}</span>
+                                                    </div>
+                                                    <span className='inline-block break-words'>Your user ID is how you are identified by the server</span>
+                                                </div>
+                                            </InfoTooltip>
                                         </div>
                                     </div>
 
                                 </div>
-                                <div className='flex items-center gap-1 justify-center flex-row'>
+                                {/* <div className='flex items-center gap-1 justify-center flex-row'>
                                     <div className='flex flex-row gap-1  '>
                                         <span className='text-sm text-muted-foreground'>User ID<i></i></span>
 
@@ -176,7 +196,7 @@ const MenuButtons: React.FC<MenuButtonsProps> = ({ onlyIcon, ...rest }) => {
                                             <span className='inline-block break-words'>Your user ID is how you are identified by the server</span>
                                         </div>
                                     </InfoTooltip>
-                                </div>
+                                </div> */}
                             </div>
                         )
                     }
@@ -186,14 +206,15 @@ const MenuButtons: React.FC<MenuButtonsProps> = ({ onlyIcon, ...rest }) => {
                     <div>
                         {
                             mysessions?.length > 0 ? mysessions.map((s, index) => (
-                                <div key={index} className='flex flex-row gap-2 justify-between items-center hover:bg-[#088D00] p-1 rounded-md cursor-pointer'
+                                <div key={index} className={`flex flex-row gap-2 justify-between items-center p-1 rounded-md cursor-pointer ${sessionId === s.sessionId ? 'font-bold' : 'hover:bg-[var(--header-bg)]'}`}
                                     onClick={() => {
                                         if (sessionId === s.sessionId) return;
                                         Navigate('/session?sessionId=' + s.sessionId);
                                     }} aria-disabled={sessionId === s.sessionId}
                                     style={{
                                         opacity: sessionId === s.sessionId ? 0.5 : 1,
-                                        backgroundColor: sessionId === s.sessionId ? '#088D00' : undefined,
+                                        // backgroundColor: sessionId === s.sessionId ? '#088D00' : undefined,
+                                        fontWeight: sessionId === s.sessionId ? 'bold' : 'normal',
                                     }}
                                 >
                                     <span>{s.alias}</span>
@@ -212,24 +233,28 @@ const MenuButtons: React.FC<MenuButtonsProps> = ({ onlyIcon, ...rest }) => {
                         <div className='flex flex-row gap-2 justify-between items-center'>
                             <span className='font-lato text-lg'>Theme:</span> <ThemeSelector />
                         </div>
-                        <div className='flex flex-row gap-2 justify-between items-center'>
-                            <span className='font-lato text-md'>Action Notifications:</span> <Switch />
-                        </div>
-                        <div className='flex flex-row gap-2 justify-between items-center'>
-                            <span className='font-lato text-md'>Tokens Notifications:</span> <Switch />
+                        {process.env.NODE_ENV === 'development' && (
+                            <>
+                                <div className='flex flex-row gap-2 justify-between items-center'>
+                                    <span className='font-lato text-md'>Action Notifications:</span> <Switch />
+                                </div>
+                                <div className='flex flex-row gap-2 justify-between items-center'>
+                                    <span className='font-lato text-md'>Tokens Notifications:</span> <Switch />
+                                </div>
+                                <hr className='my-2' />
+                                <Button className=' bg-red-500 text-white hover:bg-red-600'
+                                    onClick={() => {
+                                        invalidateToken();
+                                    }}>
+                                    delete token
+                                </Button>
+                            </>
+                        )}
+                        <hr className='my-2' />
+                        <div className='flex justify-center text-sm text-muted-foreground italic gap-1'>
+                            <strong>Version:</strong> 1.1b
                         </div>
                     </div>
-                    {process.env.NODE_ENV === 'development' && (
-                        <>
-                            <hr className='my-2' />
-                            <Button className=' bg-red-500 text-white hover:bg-red-600'
-                                onClick={() => {
-                                    invalidateToken();
-                                }}>
-                                delete token
-                            </Button>
-                        </>
-                    )}
                 </PopoverContent>
             </Popover>
             <Popover open={quickActionsOpen} onOpenChange={setQuickActionsOpen}>

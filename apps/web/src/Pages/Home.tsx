@@ -89,7 +89,7 @@ const Teams: React.FC = () => {
                                 <div className='flex flex-col gap-1'>
                                     {mysessions.map((record) => (
                                         <Button variant="outline" size="sm" onClick={() => {
-                                            Navigate('/session?sessionId=' + record.id);
+                                            Navigate('/session?sessionId=' + record.sessionId);
                                         }}
                                             className='justify-between'
                                         >
