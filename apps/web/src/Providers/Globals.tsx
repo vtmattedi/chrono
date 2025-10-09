@@ -48,7 +48,7 @@ export type SessionRecord = {
 export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
     const [onMobile, setOnMobile] = useState<boolean>(window.innerWidth < MAX_WIDTH_PX);
-    const [alias, _setAlias] = useState<string | null>('webclient');
+    const [alias, _setAlias] = useState<string | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [mysessions, setMysessions] = useState<SessionRecord[]>([]);
     const [usersettings, setUsersettings] = useState<any>({});
@@ -104,6 +104,7 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
                             id: data.userId,
                             role: data.role,
                         });
+                        _setAlias(data.alias);
                     }
                     else {
                         // token is invalid
@@ -244,7 +245,7 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
             setToken(savedToken);
         } else {
             console.log('No saved token found, requesting new token');
-            requestNewToken(savedAlias || 'webclient');
+            requestNewToken(savedAlias || '');
         }
         const savedSessions = localStorage.getItem('sessionsHistory');
         if (savedSessions) {
