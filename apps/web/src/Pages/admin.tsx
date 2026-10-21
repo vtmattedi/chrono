@@ -17,10 +17,13 @@ const Admin: React.FC = () => {
         const diff = Math.floor((new Date().getTime() - lastFetched.getTime()) / 1000);
         return `${diff} seconds ago`;
     }
-    const { token, alias } = useGlobals();
+    const { token, alias, user } = useGlobals();
     const { useToast } = useAlert();
     const [colors, setColors] = React.useState<string[]>([]);
+    const [adminName, setAdminName] = React.useState<string>('');
     const [adminPwd, setAdminPwd] = React.useState<string>('');
+    const [denied, setDenied] = React.useState<boolean>(false);
+    const authHeaders = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
     React.useEffect(() => {
         const availableColors = ['#FF6633', '#FFB399', '#FF33FF', '#FFFF99', '#00B3E6',
             '#E6B333', '#3366E6', '#999966', '#99FF99', '#B34D4D',
@@ -34,12 +37,19 @@ const Admin: React.FC = () => {
     const fetchData = async () => {
         // setLoading(true);
         ping.current = performance.now();
+        if (!token) {
+            setLoading(false);
+            return;
+        }
         Promise.all([
-            fetch(BASE_URL + '/api/listusers').then(res => res.json()),
-            fetch(BASE_URL + '/api/listsessions').then(res => res.json())
-        ]).then(([usersData, sessionsData]) => {
-            setUsers(usersData.users);
-            setSessions(sessionsData.sessions);
+            fetch(BASE_URL + '/api/listusers', { headers: authHeaders }),
+            fetch(BASE_URL + '/api/listsessions', { headers: authHeaders })
+        ]).then(async ([usersRes, sessionsRes]) => {
+            // 403/404: the current user is not an admin (yet)
+            setDenied(!usersRes.ok || !sessionsRes.ok);
+            if (!usersRes.ok || !sessionsRes.ok) return;
+            setUsers((await usersRes.json()).users ?? []);
+            setSessions((await sessionsRes.json()).sessions ?? []);
             setLastFetched(new Date());
         }).catch(error => {
             console.error('Error fetching data:', error);
@@ -50,9 +60,26 @@ const Admin: React.FC = () => {
     };
     React.useEffect(() => {
         fetchData();
-        const interval = setInterval(fetchData, 200);
+        const interval = setInterval(fetchData, 2000);
         return () => clearInterval(interval);
-    }, []);
+    }, [token]);
+
+    const becomeAdmin = () => {
+        fetch(BASE_URL + '/api/requestadmin', {
+            method: 'POST',
+            headers: authHeaders,
+            body: JSON.stringify({ userName: adminName, passwd: adminPwd }),
+        }).then(res => {
+            if (res.ok) {
+                useToast('success', 'You are now an admin');
+                fetchData();
+            } else {
+                useToast('error', 'Admin upgrade refused');
+            }
+        }).catch(err => {
+            useToast('error', 'Error requesting admin: ' + err.message);
+        });
+    };
 
     return (
         <div>
@@ -77,11 +104,17 @@ const Admin: React.FC = () => {
                 </div>
                 <div className='w-full flex flex-row gap-1 text-wrap mb-4 items-center' >
                     <LockKeyholeIcon className='inline-block mr-2' />
+                    <Input type="text" placeholder='Admin Name' className='w-46 p-2 border rounded'
+                        value={adminName}
+                        onChange={(e) => setAdminName(e.target.value)}
+                    />
                     <Input type="password" placeholder='Admin Password' className='w-46 p-2 border rounded'
                         value={adminPwd}
                         onChange={(e) => setAdminPwd(e.target.value)}
                     />
+                    <Button onClick={becomeAdmin} disabled={!adminName || !adminPwd}>Become admin</Button>
                 </div>
+                {denied && <p className='text-sm text-destructive mb-2'>Not an admin: enter the admin name and password above.</p>}
 
                 <Card >
                     <div className='flex flex-row items-center justify-between w-full px-4 mt-4'>
@@ -92,19 +125,19 @@ const Admin: React.FC = () => {
                             <tr>
                                 <th className='text-left p-2'>ID</th>
                                 <th className='text-left p-2'>Alias</th>
-                                <th className='text-left p-2'>IP</th>
+                                <th className='text-left p-2'>Role</th>
                                 <th className='text-left p-2'>Sockets</th>
                             </tr>
                         </thead>
                         <tbody>
                             {users.map((user: any, index: number) => (
-                                <tr key={user.id} className='border-t'>
+                                <tr key={user.userId} className='border-t'>
                                     <td className='p-2'
                                         style={{ color: colors[index] }}
                                     >{user.userId}</td>
                                     <td className='p-2'>{user.alias}</td>
-                                    <td className='p-2'>{user.ip}</td>
-                                    <td className='p-2'>{user.socketId.length}</td>
+                                    <td className='p-2'>{user.role}</td>
+                                    <td className='p-2'>{user.sockets}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -152,7 +185,7 @@ const Admin: React.FC = () => {
                                 }
 
                                 return (
-                                    <tr key={session.id} className='border-t'>
+                                    <tr key={session.sessionId} className='border-t'>
                                         <td className='p-2'>{session.sessionId}</td>
                                         <td className='p-2'
                                             style={{ color: color }}
@@ -173,13 +206,10 @@ const Admin: React.FC = () => {
                                             onClick={() => {
                                                 fetch(BASE_URL + '/api/setowner', {
                                                     method: 'POST',
-                                                    headers: {
-                                                        'Authorization': 'Bearer ' + token,
-                                                        'x-adm-passwd': adminPwd,
-                                                        'Content-Type': 'application/json'
-                                                    },
+                                                    headers: authHeaders,
                                                     body: JSON.stringify({
-                                                        sessionId: session.sessionId
+                                                        sessionId: session.sessionId,
+                                                        newOwnerId: user.id
                                                     }),
                                                 }).then(res => {
                                                     if (res.ok) {

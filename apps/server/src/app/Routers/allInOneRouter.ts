@@ -27,6 +27,8 @@ allRouter.post("/api/setowner", authMiddleware, chronoController.setOwner);
 allRouter.get("/api/mysessions", authMiddleware, chronoController.getSessionsWithId);
 allRouter.get("/api/sessionlog/:sessionId", authMiddleware, chronoController.getLog);
 allRouter.get("/api/requestadmin", authMiddleware, authController.upgradeToAdmin);
+// Browsers cannot send a body with GET, so the web admin page uses POST.
+allRouter.post("/api/requestadmin", authMiddleware, authController.upgradeToAdmin);
 allRouter.post("/api/updateroles", authMiddleware, chronoController.updateRoles);
 
 
