@@ -1,0 +1,17 @@
+{
+  "name": "chrono",
+  "version": "1.2.0",
+  "private": true,
+  "description": "Chrono monorepo: web (React/Vite) and server (Express + Socket.IO)",
+  "scripts": {
+    "dev": "concurrently -n server,web -c blue,green \"npm:dev:server\" \"npm:dev:web\"",
+    "install:all": "npm install && npm --prefix apps/web install && npm --prefix apps/server install",
+    "dev:web": "npm --prefix apps/web run dev",
+    "dev:server": "npm --prefix apps/server run start:dev",
+    "build:web": "npm --prefix apps/web run build",
+    "lint:web": "npm --prefix apps/web run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  }
+}
