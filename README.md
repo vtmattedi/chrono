@@ -121,5 +121,3 @@ Locally: `docker compose -f docker-compose.stackport.yml build`.
 - The web app calls its own origin for the API and Socket.IO, so it must be served together with the server
   (nginx in the Stackport setup, or the server itself with `SERVER_ONLY` unset); it can't be hosted alone.
 - No persistence and no rate limiting; the admin upgrade endpoint is protected only by the admin credentials.
-- `apps/server/package.json` still lists unused dependencies (Prisma, mysql2, neon, @nestjs/schedule), and
-  `apps/web` lists `recharts`, which nothing imports now.
