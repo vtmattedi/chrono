@@ -44,7 +44,7 @@ class Server extends BasicServer {
 
   constructor() {
     super();
-    const corsOrigin = process.env.NODE_ENV === 'production' ? 'https://mwchrono.vercel.app' : 'http://localhost:5173';
+    const corsOrigin = process.env.NODE_ENV === 'production' ? 'https://chrono.mattediworks.com' : 'http://localhost:5173';
     logger_i("CORS Origin set to:", corsOrigin);
     this.middleware();
     this.withCookies();
@@ -63,7 +63,7 @@ class Server extends BasicServer {
     else {
       logger_w("Server only mode, not serving frontend");
       this.server.use('*', (req, res) => {
-        res.redirect(301, corsOrigin);
+        res.status(404).json({ message: 'Not found' });
       });
     }
 
