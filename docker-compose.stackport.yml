@@ -1,0 +1,26 @@
+# Stackport deployment: two services.
+#   chrono-web  nginx: serves the built frontend, proxies /api and /socket.io to chrono-api
+#   chrono-api  Express + Socket.IO (never exposed to the host or routed directly)
+# Route the domain to service "chrono-web", container port 80. Health check: /api/healthy
+# Secrets go in a root ".env" written by Stackport (see .env.example).
+services:
+  chrono-web:
+    build: ./apps/web
+    restart: unless-stopped
+    depends_on:
+      - chrono-api
+    expose:
+      - "80"
+
+  chrono-api:
+    build: ./apps/server
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PORT: "4500"
+      NODE_ENV: production
+      SERVER_ONLY: "false"
+    expose:
+      - "4500"

@@ -1,19 +1,9 @@
-FROM node
-WORKDIR /usr/src/app
-
-# Copy package files
+# API + Socket.IO only; the frontend is served by apps/web (nginx).
+FROM node:22-slim
+WORKDIR /app
 COPY package*.json ./
-
-# Install dependencies
-RUN npm install
-
-# Copy the rest of the application
+RUN npm ci
 COPY . .
-
-# Build the application (frontend)
-RUN node run.js
-
+ENV NODE_ENV=production
 EXPOSE 4500
-
-# Use the start:prod script from package.json
 CMD ["npm", "run", "start:prod"]

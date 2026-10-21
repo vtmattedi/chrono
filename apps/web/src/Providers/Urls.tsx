@@ -1,4 +1,4 @@
 export const BASE_URL = 
-    process.env.NODE_ENV === 'production' ? 'https://chrono.mattedidev.com.br' : 'http://localhost:4500';
+    process.env.NODE_ENV === 'production' ? window.location.origin : 'http://localhost:4500';
 
 
