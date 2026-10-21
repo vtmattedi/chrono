@@ -56,6 +56,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     const pingIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
     const sessionRecordRef = React.useRef<SessionRecord>({ id: '', alias: '' });
     const myUserIdRef = React.useRef<string>('');
+    // Socket handlers are registered once at join time, so read live values through refs.
+    const settingsRef = React.useRef(usersettings);
+    settingsRef.current = usersettings;
+    const teamsRef = React.useRef(teams);
+    teamsRef.current = teams;
     const socket = React.useRef<Socket>(io(BASE_URL, {
         autoConnect: false,
     }));
@@ -84,38 +89,39 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     }
 
     const AlertAction = (type: string, indexi: number[]) => {
-        if (!usersettings?.actions_alerts) return;
+        if (!settingsRef.current.actions_alerts) return;
+        const names = indexi.map(i => teamsRef.current[i]?.name ?? `#${i + 1}`).join(', ');
         const teamstr = indexi.length > 1 ? "teams" : "team";
         const is = indexi.length === 1 ? "is" : "are";
         const [actionType, value] = type.split(':');
         if (actionType === 'start') {
-            useToast('success', `Starting ${teamstr} ${indexi.map(i => teams[i].name).join(', ')}`);
+            useToast('success', `Starting ${teamstr} ${names}`);
         }
         else if (actionType === 'pause') {
-            useToast('warning', `Pausing ${teamstr} ${indexi.map(i => teams[i].name).join(', ')}`);
+            useToast('warning', `Pausing ${teamstr} ${names}`);
         }
         else if (actionType === 'unpause') {
-            useToast('success', `Unpausing ${teamstr} ${indexi.map(i => teams[i].name).join(', ')}`);
+            useToast('success', `Unpausing ${teamstr} ${names}`);
         }
         else if (actionType === 'finish') {
-            useToast('success', `${teamstr} ${indexi.map(i => teams[i].name).join(', ')} just finished!`);
+            useToast('success', `${teamstr} ${names} just finished!`);
         }
         else if (actionType === 'add') {
             const seconds = parseInt(value);
             const minutes_str = `${Math.floor(seconds / 60).toString().padStart(2, '0')}: ${Math.abs(seconds % 60).toString().padStart(2, '0')}`;
             if (!seconds) return;
             if (seconds > 0)
-                useToast('info', `${minutes_str} were added to ${teamstr} ${indexi.map(i => teams[i].name).join(', ')}`);
+                useToast('info', `${minutes_str} were added to ${teamstr} ${names}`);
             else
-                useToast('info', `${minutes_str} were removed from ${teamstr} ${indexi.map(i => teams[i].name).join(', ')}`);
+                useToast('info', `${minutes_str} were removed from ${teamstr} ${names}`);
         }
         else if (actionType === 'rearm') {
-            useToast('info', `Team ${teamstr} ${indexi.map(i => teams[i].name).join(', ')} reseted!`);
+            useToast('info', `Team ${teamstr} ${names} reseted!`);
         }
         else if (actionType === 'speed') {
             const speed = parseFloat(value);
             if (!speed) return;
-            useToast('info', `${teamstr} ${indexi.map(i => teams[i].name).join(', ')} ${is} at ${speed}x now!`);
+            useToast('info', `${teamstr} ${names} ${is} at ${speed}x now!`);
         }
     }
     const setSessionUsers = (data: sessionUsers[]) => {
@@ -267,7 +273,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         });
         socket.current.on('users', (message) => {
             for (const u of message) {
-                if (usersettings?.actions_alert || true) {
+                if (settingsRef.current.actions_alerts) {
                     const user = sessionUsersRef.current.find((user) => user.userId === u.userId);
                     console.log('User update:', u, user, u.role, user?.role);
                     if (user && user.role !== u.role) {

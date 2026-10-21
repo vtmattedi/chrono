@@ -16,9 +16,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Badge } from './ui/badge';
 import StateBadge from './StateBadge';
 import ThemeSelector from './ThemeSelector';
+const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+    <div className='mb-1 text-xs font-inter uppercase tracking-wide text-muted-foreground'>{children}</div>
+);
+
 const MenuButtons: React.FC<MenuButtonsProps> = ({ onlyIcon, ...rest }) => {
     const { showAlert } = useAlert();
-    const { invalidateToken, sessionsHistory, user, alias, mysessions, setAlias } = useGlobals();
+    const { invalidateToken, sessionsHistory, user, alias, mysessions, setAlias, usersettings, setUsersettings } = useGlobals();
     const Navigate = useNavigate();
     const [settingsOpen, setSettingsOpen] = React.useState(false);
     const [quickActionsOpen, setQuickActionsOpen] = React.useState(false);
@@ -93,7 +97,7 @@ const MenuButtons: React.FC<MenuButtonsProps> = ({ onlyIcon, ...rest }) => {
         return () => window.removeEventListener('focus', handleWindowFocus);
     }, [fileDialogOpen]);
 
-    const popoverContentClassName = 'w-64 bg-[#bbb] dark:bg-[#222] z-10000 font-lato'
+    const popoverContentClassName = 'w-72 bg-[#bbb] dark:bg-[#222] z-10000 font-lato'
     const popoverTriggerClassName = 'cursor-pointer hover:opacity-70 items-center flex flex-row gap-2 font-lato'
     const saveAlias = () => {
         const newAlias = (document.getElementById('alias-input') as HTMLInputElement).value;
@@ -115,7 +119,6 @@ const MenuButtons: React.FC<MenuButtonsProps> = ({ onlyIcon, ...rest }) => {
                 </PopoverTrigger>
 
                 <PopoverContent className={popoverContentClassName} align='end'>
-
                     {
                         !user.id && (
                             <div className='text-red-500 font-inter text-sm'>You are not connected to the backend. Some features may be unavailable.</div>
@@ -123,87 +126,54 @@ const MenuButtons: React.FC<MenuButtonsProps> = ({ onlyIcon, ...rest }) => {
                     }
                     {
                         user.id && (
-                            <div className='flex flex-col gap-2 w-full'>
-                                <div className='flex flex-row w-full  gap-2 rounded-md items-center'>
-                                    <div className='flex w-20 flex-col items-center gap-1'>
-                                        <img src={'https://gravatar.com/avatar/d64b224b12d58435f8758b01b028251c?s=400&d=robohash&r=x'}
-                                            alt="User Avatar"
-                                            className="w-16  rounded-full border-2 border-green-300 " />
-                                    </div>
-
-                                    <div className='flex flex-col w-full gap-0 space-y-0'>
-                                        <div className='flex items-center gap-1 justify-between'>
-                                            <div className='flex flex-row gap-1 justify-center w-full '>
-                                                <span className='text-muted-foreground'><i>alias</i></span>
-                                            </div>
-                                            <InfoTooltip iconSize={18}>
-                                                <div className='flex flex-col gap-2 z-100001 w-md'>
-                                                    <span>Your alias is used by others to identify you in sessions.</span>
-                                                </div>
-                                            </InfoTooltip>
-                                        </div>
-                                        <div className='flex items-center  justify-between w-full'>
-                                            {!editingAlias ? (
-                                                <>
-                                                    <div className='flex flex-row gap-1 justify-center w-full '>
-                                                        <span className='text-lato'>{alias || 'Anonymous'}</span>
-                                                    </div>
-                                                    <Edit className='inline-block ml-1 hover:opacity-70 hover:cursor-pointer' size={16}
-                                                        onClick={() => { setEditingAlias(true) }}
-                                                    />
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Input onBlur={() => { setEditingAlias(false); saveAlias(); }} defaultValue={alias || 'Anonymous'} placeholder='Enter alias' id='alias-input' />
-                                                    <Save className='inline-block ml-1 hover:opacity-70 hover:cursor-pointer' size={32}
-                                                        onClick={() => { setEditingAlias(false); saveAlias(); }}
-                                                    />
-                                                </>
-                                            )}
-                                        </div>
-                                        <div className='flex flex-row justify-between w-full items-center'>
-                                            <div className='flex flex-row  justify-center w-full '>
-                                                {
-                                                    user.role === 'admin' ? (
-                                                        <Badge className='bg-orange-400 text-black font-inter' >Admin</Badge>
-                                                    ) : (
-                                                        <Badge className='bg-blue-400 text-black font-inter' variant='secondary'>{user.role || 'No Role'}</Badge>
-                                                    )}
-                                            </div>
-                                            <InfoTooltip iconSize={18}>
-                                                <div className='flex flex-col gap-2 z-100001 min-w-md flex-wrap break-words max-w-md'>
-                                                    <div className='flex flex-row gap-1 items-center'>
-                                                        <div className='flex flex-row gap-1 '>
-                                                            <span className='text-sm text-muted-foreground'>User ID:</span>
-                                                        </div>
-                                                        <span className='text-lato break-all'>{user.id}</span>
-                                                    </div>
-                                                    <span className='inline-block break-words'>Your user ID is how you are identified by the server</span>
-                                                </div>
-                                            </InfoTooltip>
-                                        </div>
-                                    </div>
-
+                            <div className='flex flex-row items-center gap-3'>
+                                <div className='flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-[#ff9849] bg-background text-2xl font-audiowide'>
+                                    {(alias || 'A').trim().charAt(0).toUpperCase()}
                                 </div>
-                                {/* <div className='flex items-center gap-1 justify-center flex-row'>
-                                    <div className='flex flex-row gap-1  '>
-                                        <span className='text-sm text-muted-foreground'>User ID<i></i></span>
-
+                                <div className='flex min-w-0 flex-1 flex-col gap-1'>
+                                    <div className='flex items-center justify-between gap-1'>
+                                        {!editingAlias ? (
+                                            <>
+                                                <span className='truncate text-lg'>{alias || 'Anonymous'}</span>
+                                                <Edit className='shrink-0 hover:opacity-70 hover:cursor-pointer' size={16}
+                                                    onClick={() => { setEditingAlias(true) }}
+                                                />
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Input className='h-8' onBlur={() => { setEditingAlias(false); saveAlias(); }} defaultValue={alias || 'Anonymous'} placeholder='Enter alias' id='alias-input' autoFocus />
+                                                <Save className='shrink-0 hover:opacity-70 hover:cursor-pointer' size={20}
+                                                    onClick={() => { setEditingAlias(false); saveAlias(); }}
+                                                />
+                                            </>
+                                        )}
                                     </div>
-                                    <span className='text-lato break-all'>{user.id}</span>
-                                    <InfoTooltip iconSize={16}>
-                                        <div className='flex flex-col gap-2 z-100001 min-w-md flex-wrap break-words max-w-md'>
-                                            <span className='inline-block break-words'>Your user ID is how you are identified by the server</span>
-                                        </div>
-                                    </InfoTooltip>
-                                </div> */}
+                                    <div className='flex items-center justify-between'>
+                                        {
+                                            user.role === 'admin' ? (
+                                                <Badge className='bg-orange-400 text-black font-inter' >Admin</Badge>
+                                            ) : (
+                                                <Badge className='bg-blue-400 text-black font-inter' variant='secondary'>{user.role || 'No Role'}</Badge>
+                                            )}
+                                        <InfoTooltip iconSize={18}>
+                                            <div className='flex flex-col gap-2 z-100001 min-w-md flex-wrap break-words max-w-md'>
+                                                <span>Your alias is used by others to identify you in sessions.</span>
+                                                <div className='flex flex-row gap-1 items-center'>
+                                                    <span className='text-sm text-muted-foreground'>User ID:</span>
+                                                    <span className='text-lato break-all'>{user.id}</span>
+                                                </div>
+                                                <span className='inline-block break-words'>Your user ID is how you are identified by the server</span>
+                                            </div>
+                                        </InfoTooltip>
+                                    </div>
+                                </div>
                             </div>
                         )
                     }
 
-                    <hr className='my-2' />
-                    <span className='font-lato text-lg'>My Sessions</span>:
-                    <div>
+                    <hr className='my-3' />
+                    <SectionTitle>My Sessions</SectionTitle>
+                    <div className='max-h-40 overflow-y-auto'>
                         {
                             mysessions?.length > 0 ? mysessions.map((s, index) => (
                                 <div key={index} className={`flex flex-row gap-2 justify-between items-center p-1 rounded-md cursor-pointer ${sessionId === s.sessionId ? 'font-bold' : 'hover:bg-[var(--header-bg)]'}`}
@@ -213,47 +183,55 @@ const MenuButtons: React.FC<MenuButtonsProps> = ({ onlyIcon, ...rest }) => {
                                     }} aria-disabled={sessionId === s.sessionId}
                                     style={{
                                         opacity: sessionId === s.sessionId ? 0.5 : 1,
-                                        // backgroundColor: sessionId === s.sessionId ? '#088D00' : undefined,
                                         fontWeight: sessionId === s.sessionId ? 'bold' : 'normal',
                                     }}
                                 >
-                                    <span>{s.alias}</span>
-                                    <div className='flex flex-row gap-1 items-center'>
+                                    <span className='truncate'>{s.alias}</span>
+                                    <div className='flex shrink-0 flex-row gap-1 items-center'>
                                         <StateBadge state={s.state} />
                                         <ArrowRight size={16} />
                                     </div>
                                 </div>
                             )) : (
-                                <i>No sessions found</i>
+                                <i className='text-sm text-muted-foreground'>No sessions found</i>
                             )
                         }
                     </div>
-                    <hr className='my-2' />
-                    <div>
+
+                    <hr className='my-3' />
+                    <SectionTitle>Preferences</SectionTitle>
+                    <div className='flex flex-col gap-3'>
                         <div className='flex flex-row gap-2 justify-between items-center'>
-                            <span className='font-lato text-lg'>Theme:</span> <ThemeSelector />
+                            <span>Theme</span> <ThemeSelector />
                         </div>
-                        {process.env.NODE_ENV === 'development' && (
-                            <>
-                                <div className='flex flex-row gap-2 justify-between items-center'>
-                                    <span className='font-lato text-md'>Action Notifications:</span> <Switch />
-                                </div>
-                                <div className='flex flex-row gap-2 justify-between items-center'>
-                                    <span className='font-lato text-md'>Tokens Notifications:</span> <Switch />
-                                </div>
-                                <hr className='my-2' />
-                                <Button className=' bg-red-500 text-white hover:bg-red-600'
-                                    onClick={() => {
-                                        invalidateToken();
-                                    }}>
-                                    delete token
-                                </Button>
-                            </>
-                        )}
-                        <hr className='my-2' />
-                        <div className='flex justify-center text-sm text-muted-foreground italic gap-1'>
-                            <strong>Version:</strong> 1.1b
-                        </div>
+                        <label className='flex flex-row gap-2 justify-between items-center cursor-pointer'>
+                            <div className='flex flex-col'>
+                                <span>Action notifications</span>
+                                <span className='text-xs text-muted-foreground'>Start, pause, time changes, role changes</span>
+                            </div>
+                            <Switch checked={usersettings.actions_alerts}
+                                onCheckedChange={(checked) => setUsersettings({ actions_alerts: checked })} />
+                        </label>
+                        <label className='flex flex-row gap-2 justify-between items-center cursor-pointer'>
+                            <div className='flex flex-col'>
+                                <span>Token notifications</span>
+                                <span className='text-xs text-muted-foreground'>When your token is set or replaced</span>
+                            </div>
+                            <Switch checked={usersettings.token_alerts}
+                                onCheckedChange={(checked) => setUsersettings({ token_alerts: checked })} />
+                        </label>
+                    </div>
+                    {process.env.NODE_ENV === 'development' && (
+                        <Button className='mt-3 w-full bg-red-500 text-white hover:bg-red-600'
+                            onClick={() => {
+                                invalidateToken();
+                            }}>
+                            delete token
+                        </Button>
+                    )}
+                    <hr className='my-3' />
+                    <div className='flex justify-center text-sm text-muted-foreground italic gap-1'>
+                        <strong>Version:</strong> 1.2
                     </div>
                 </PopoverContent>
             </Popover>

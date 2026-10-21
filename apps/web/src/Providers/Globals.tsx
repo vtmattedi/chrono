@@ -9,8 +9,8 @@ type GlobalState = {
     token: string | null;
     alias: string | null;
     setAlias: (alias: string | null) => void;
-    usersettings: any;
-    setUsersettings: (settings: any) => void;
+    usersettings: UserSettings;
+    setUsersettings: (settings: Partial<UserSettings>) => void;
     invalidateToken: () => void;
     addToSessionHistory: (session: SessionRecord) => void;
     clearHistory: (sessionId: string) => void;
@@ -43,6 +43,25 @@ export type SessionRecord = {
     alias: string;
 };
 
+export type UserSettings = {
+    actions_alerts: boolean; // toasts for session actions (start, pause, add time, role changes...)
+    token_alerts: boolean;   // toasts for token changes
+};
+
+const DEFAULT_SETTINGS: UserSettings = { actions_alerts: true, token_alerts: false };
+
+const loadSettings = (): UserSettings => {
+    try {
+        const saved = JSON.parse(localStorage.getItem('usersettings') || '{}');
+        return {
+            actions_alerts: typeof saved.actions_alerts === 'boolean' ? saved.actions_alerts : DEFAULT_SETTINGS.actions_alerts,
+            token_alerts: typeof saved.token_alerts === 'boolean' ? saved.token_alerts : DEFAULT_SETTINGS.token_alerts,
+        };
+    } catch {
+        return DEFAULT_SETTINGS;
+    }
+};
+
 
 
 export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
@@ -51,7 +70,18 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
     const [alias, _setAlias] = useState<string | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [mysessions, setMysessions] = useState<SessionRecord[]>([]);
-    const [usersettings, setUsersettings] = useState<any>({});
+    const [usersettings, _setUsersettings] = useState<UserSettings>(loadSettings);
+    const setUsersettings = (changes: Partial<UserSettings>) => {
+        _setUsersettings(prev => {
+            const next = { ...prev, ...changes };
+            try {
+                localStorage.setItem('usersettings', JSON.stringify(next));
+            } catch {
+                // storage unavailable: keep the setting for this session only
+            }
+            return next;
+        });
+    };
     const [sessionsHistory, setSessionsHistory] = useState<SessionRecord[]>([]);
     const sessionUpdateTimer = React.useRef<NodeJS.Timeout | null>(null);
     const [user, setUser] = useState<{
@@ -168,6 +198,7 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
     const invalidateToken = () => {
         setToken(null);
         localStorage.removeItem('token');
+        if (usersettings.token_alerts) useToast('warning', 'Token invalidated, requesting a new one');
         requestNewToken(alias || 'webclient');
         setUser({ id: null, role: null });
     }
@@ -200,7 +231,7 @@ export const GlobalProvider: React.FC<GlobalProviderProps> = ({ children }) => {
     }, [sessionsHistory]);
     React.useEffect(() => {
         console.log('Token changed:', token);
-        useToast('info', token ? 'Token set' : 'No token available');
+        if (usersettings.token_alerts) useToast('info', token ? 'Token set' : 'No token available');
         if (!token) return;
         if (token) {
             verifyToken(token);
